@@ -43,9 +43,21 @@
     "test:8:frontend": "npm run test:8 --prefix ./front-end",
     "test:8:backend": "npm run test:8 --prefix ./back-end",
     "test:e2e": "npm run test:e2e --prefix ./front-end",
-    "test:frontend:watch": "npm test --prefix ./front-end"
+    "test:frontend:watch": "npm test --prefix ./front-end",
+    "dev": "nodemon src/server.js"
   },
   "keywords": [],
   "author": "Thinkful, Inc.",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "global": "^4.4.0",
+    "knex": "^3.1.0",
+    "puppeteer": "^23.5.1",
+    "react-phone-number-input": "^3.4.8",
+    "react-router-dom": "^6.26.2"
+  },
+  "devDependencies": {
+    "@types/react-router-dom": "^5.3.3"
+  }
 }
