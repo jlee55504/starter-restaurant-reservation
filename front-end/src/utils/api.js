@@ -6,7 +6,8 @@ import formatReservationDate from "./format-reservation-date";
 import formatReservationTime from "./format-reservation-date";
 
 const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
+  //process.env.REACT_APP_API_BASE_URL || 
+  "http://localhost:5000";
 
 /**
  * Defines the default headers for these functions to work with `json-server`
@@ -38,7 +39,7 @@ async function fetchJson(url, options, onCancel) {
     }
 
     const payload = await response.json();
-
+    console.log(payload)
     if (payload.error) {
       return Promise.reject({ message: payload.error });
     }
@@ -63,7 +64,30 @@ export async function listReservations(params, signal) {
   Object.entries(params).forEach(([key, value]) =>
     url.searchParams.append(key, value.toString())
   );
+  console.log(url)
   return await fetchJson(url, { headers, signal }, [])
     .then(formatReservationDate)
     .then(formatReservationTime);
+}
+
+export const readReservation = async(reservation, signal) => {
+  const url = new URL(`${API_BASE_URL}/reservations/${reservation.reservation_date}`);
+  const options = {
+    method: "GET",
+    headers,
+    body: JSON.stringify({ data: reservation }),
+    signal,
+  };
+  return await fetchJson(url, options);
+}
+
+export default async function makeNewReservation (reservation, signal) {
+  const url = new URL(`${API_BASE_URL}/reservations`);
+  const options = {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ data: reservation }),
+    signal,
+  };
+  return await fetchJson(url, options);
 }
