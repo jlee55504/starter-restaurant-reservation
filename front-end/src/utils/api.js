@@ -2,6 +2,7 @@
  * Defines the base URL for the API.
  * The default values is overridden by the `API_BASE_URL` environment variable.
  */
+import axios from "axios";
 import formatReservationDate from "./format-reservation-date";
 import formatReservationTime from "./format-reservation-date";
 
@@ -31,6 +32,8 @@ headers.append("Content-Type", "application/json");
  *  If the response is not in the 200 - 399 range the promise is rejected.
  */
 async function fetchJson(url, options, onCancel) {
+  //console.log(url)
+  //console.log(options)
   try {
     const response = await fetch(url, options);
 
@@ -39,7 +42,7 @@ async function fetchJson(url, options, onCancel) {
     }
 
     const payload = await response.json();
-    console.log(payload)
+ //   console.log(payload)
     if (payload.error) {
       return Promise.reject({ message: payload.error });
     }
@@ -64,24 +67,30 @@ export async function listReservations(params, signal) {
   Object.entries(params).forEach(([key, value]) =>
     url.searchParams.append(key, value.toString())
   );
-  console.log(url)
+ // console.log(url)
   return await fetchJson(url, { headers, signal }, [])
     .then(formatReservationDate)
     .then(formatReservationTime);
-}
+};
 
-export const readReservation = async(reservation, signal) => {
-  const url = new URL(`${API_BASE_URL}/reservations/${reservation.reservation_date}`);
+export const readReservation = async(reservation_dates, signal) => {
   const options = {
     method: "GET",
     headers,
-    body: JSON.stringify({ data: reservation }),
     signal,
   };
-  return await fetchJson(url, options);
-}
+  let reservations;
+  let url;
+  for (const reservation_date of reservation_dates) {
+     url = new URL(`${API_BASE_URL}/reservations/${(reservation_date)}`);
+     reservations = await fetchJson(url, options)
+      .then(formatReservationDate)
+      .then(formatReservationTime);
+  };
+  return Promise.all(reservations);
+};
 
-export default async function makeNewReservation (reservation, signal) {
+export async function makeNewReservation (reservation, signal) {
   const url = new URL(`${API_BASE_URL}/reservations`);
   const options = {
     method: "POST",
@@ -89,5 +98,8 @@ export default async function makeNewReservation (reservation, signal) {
     body: JSON.stringify({ data: reservation }),
     signal,
   };
-  return await fetchJson(url, options);
-}
+  return await fetchJson(url, options)
+    .then(formatReservationDate)
+    .then(formatReservationTime);
+};
+
