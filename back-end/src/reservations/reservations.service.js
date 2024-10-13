@@ -11,13 +11,13 @@ const read = (reservation_date)=> {
     return knex("reservations as r")          
             .select("r.*")
             .where({ reservation_date })
-            .orderBy("r.reservation_time")                
+            .orderBy("r.reservation_time");                
 }
 
 const list = () => {
     return knex("reservations as r")
         .select("r.*")
-        .orderBy("r.reservation_time")
+        .orderBy("r.reservation_time");
 }
 
 module.exports = {
