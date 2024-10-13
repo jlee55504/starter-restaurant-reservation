@@ -38,8 +38,10 @@ const hasOnlyValidProperties = (req, res, next) => {
 };
 
 const reservationExists = async (req, res, next) => {
+ // const {data: {reservation_time} = {}} = req.body
+
   const reservation = await reservationsService.read(req.params.date);
-  console.log(reservation)
+  //console.log(req.params.date)
   if (reservation) {
     res.locals.reservation_date = reservation;
     return next();
@@ -52,9 +54,9 @@ const reservationExists = async (req, res, next) => {
 
 // Route handlers
 const read = (req, res) => {
- // const data = { reservation: data } = res.locals;
- const data = res.locals.reservation_date 
-  res.json({ data})
+  //const data = { reservation: data } = res.locals;
+ const data = res.locals.reservation_date;
+  res.json({ data })
 }
 
 async function list(req, res) {
