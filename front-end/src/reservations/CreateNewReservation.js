@@ -4,10 +4,10 @@ import React, { useState } from "react";
 'components' from 'react-router-dom'. */
 import {  useHistory } from "react-router-dom";
 import { Button } from "react-bootstrap";
-import readReservation from '../utils/api';
+import {readReservation} from '../utils/api';
 import ErrorAlert from "../layout/ErrorAlert";
-import makeNewReservation from '../utils/api';
-
+import {makeNewReservation }from '../utils/api';
+import { formatAsDate } from "../utils/date-time";
   
 
 function CreateNewReservation() {
@@ -39,20 +39,12 @@ function CreateNewReservation() {
             reservation_time: reservation_time,
             people: Number(people),
         };
-     //   makeNewReservation(newReservation, abortController.signal);
-        readReservation(newReservation, abortController.signal)
-        /*.then(() =>{
-           
-                
-            })
-            .catch(set_error)*/
-            set_first_name("");
-            set_last_name("");
-            set_mobile_number("");
-            set_reservation_time("");
-            set_people("");
-            history.push(`/dashboard/${newReservation.reservation_date}`)
-            set_reservation_date("");
+        makeNewReservation(newReservation, abortController.signal)    
+        .then((newReservation) => {
+            history.push(
+              `/dashboard?date=${formatAsDate(newReservation.reservation_date)}`
+            )})
+            .catch(set_error);
     }
     return (
       <main>
