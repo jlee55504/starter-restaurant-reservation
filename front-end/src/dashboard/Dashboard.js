@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { listReservations } from "../utils/api";
 import ErrorAlert from "../layout/ErrorAlert";
-import { useParams } from 'react-router-dom';
-import readReservation from '../utils/api';
+import { useLocation, useHistory } from 'react-router-dom';
+import {readReservation} from '../utils/api';
+import { previous } from '../utils/date-time';
+import { next } from '../utils/date-time';
+import { Button } from "react-bootstrap";
 /**
  * Defines the dashboard page.
  * @param date
@@ -10,50 +13,77 @@ import readReservation from '../utils/api';
  * @returns {JSX.Element}
  */
 function Dashboard({ date }) {
- let { reservationDate } = useParams();
+  const history = useHistory();
+  const search = useLocation().search;
+  const queryParams = new URLSearchParams(search).get("date");
   const [reservations, setReservations] = useState([]);
   const [reservationsError, setReservationsError] = useState(null);
-  
-  if (reservationDate) { date = reservationDate;
-    //const abortController = new AbortController();
-    //setReservationsError(null);
-    //readReservation({reservationDate}, abortController.signal)
-   }
-  //console.log(date)
-  //useEffect(loadDashboard [reservationDate])
-  //else 
+  const [reservationsWithDate, setReservationsWithDate] = useState([]);
+  const [ previousDaysDate, setPreviousDaysDate ] = useState(false);
+  const [nextDaysDate, setNextDaysDate] = useState(false);
+
   useEffect(loadDashboard, [date]);
+  
+  const loadPreviousDaysReservations = () => {
 
-  /*const loadReservationDashboard = () => {
-    const abortController = new AbortController();
-    setReservationsError(null);
-    readReservation()
-  }*/
-
+  }
   function loadDashboard() {
     const abortController = new AbortController();
     setReservationsError(null);
-   /* if (reservationDate) {
-      readReservation({date}, abortController.signal)
-      .then(setReservations)
-      .catch(setReservationsError);
-    }*/
-   // else// 
-   if (date) {
     listReservations({ date }, abortController.signal)
-      .then(setReservations)
-      .catch(setReservationsError);}
-    return () => abortController.abort();
-  }
+      .then((reservations) => {
+        if (date === queryParams) {
+          if (reservations.length > 0){
+          const reservationsWithDates = reservations.filter(reservation => reservation.reservation_date === date)
+            .map(reservation => { 
+              if (reservation.reservation_date === date){ 
+                return reservation.reservation_date;
+              }
+            })
+            return readReservation(reservationsWithDates, abortController.signal); 
+          } else {
+              setReservationsWithDate([]);
+              return;
+          }        
+        } else {
+            return Promise.reject(reservations);
+          }
+      })
+      .then(setReservationsWithDate)
+      .catch((reservations) => {
+        if (reservations.length > 0){ 
+        const todaysReservations = reservations.filter(reservation => reservation.reservation_date === date)
+        .map(reservation => { 
+          if (reservation.reservation_date === date) { 
+            return reservation.reservation_date;
+          }
+        });
+        return setReservations(todaysReservations);
+      } else {
+          setReservations([])
+          return;
+      }
+    })
+      .catch(setReservationsError);
+      return () => abortController.abort();
+    }
 
-  return (
+return (
     <main>
       <h1>Dashboard</h1>
       <div className="d-md-flex mb-3">
         <h4 className="mb-0">Reservations for date</h4>
       </div>
       <ErrorAlert error={reservationsError} />
-      {JSON.stringify(reservations)}
+      { reservationsWithDate.length > 0 ?
+       JSON.stringify(reservationsWithDate) : null }
+      { reservations.length > 0 && reservationsWithDate.length === 0 ? JSON.stringify(reservations) : null }
+      { reservations.length === 0 && reservationsWithDate.length === 0 ? <h6>No reservations today</h6> : null }
+      <div>
+          <Button className="btn btn-secondary" >Previous day</Button>
+          <Button className="btn btn-primary">Today</Button>
+          <Button className="btn btn-secondary">Next day</Button>
+      </div>
     </main>
   );
 }
