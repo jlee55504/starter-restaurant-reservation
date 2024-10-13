@@ -12,7 +12,8 @@ router.route("/")
     .get(controller.list)
     .post(controller.create)
     .all(methodNotAllowed);
-router.route("/:date")
+
+    router.route("/:date")
     .get(controller.read)
     .all(methodNotAllowed);
 module.exports = router;
