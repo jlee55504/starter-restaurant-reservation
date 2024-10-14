@@ -7,11 +7,15 @@ import React from "react";
  * @returns {JSX.Element}
  *  a bootstrap danger alert that contains the message string.
  */
-
+/*error.length > 1 ? error.map(error => error.message ) :
+        error.message */
 function ErrorAlert({ error }) {
   return (
     error && (
-      <div className="alert alert-danger m-2">Error: {error.message}</div>
+      <div className="alert alert-danger m-2">Error: {
+        error.length > 1 ? error.map(error => error.message ) :
+        error.message
+        }</div>
     )
   );
 }
