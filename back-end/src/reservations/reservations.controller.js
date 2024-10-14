@@ -29,6 +29,34 @@ const reservationExists = async (req, res, next) => {
   });
 };
 
+const checkReservationForClosedDay = (req, res, next) => {
+  const { data: { reservation_date } = {} } = req.body;
+  let reservationDate = new Date(reservation_date.replace(/-/g, '\/'));
+  if (reservationDate.getDay() === 2) { 
+    return next({
+      status: 400,
+      message: "This restaurant is closed on Tuesdays. Please try again. "
+    });
+  };
+  next();
+};
+
+const checkReservationForPastDates = (req, res, next) => {
+  const { data = {} } = req.body;
+  const { reservation_date } = data;
+  let reservationDateToCompare = parseInt(reservation_date.replace(/-/g, '\/').split('/').join(''));
+  let todaysDate = new Date();
+  todaysDate = parseInt(todaysDate.toLocaleDateString('pt-br').split( '/' ).reverse().join(''))
+  if (reservationDateToCompare < todaysDate) {
+    return next({
+      status: 400,
+      message: `reservationDateToCompare: ${reservationDateToCompare}
+      past date: ${reservationDateToCompare < todaysDate}`,
+    });
+  }
+  return next();
+}
+
 // Route handlers
 const read = (req, res) => {
  const data = res.locals.reservation_date;
@@ -48,5 +76,5 @@ const create = async(req, res) => {
 module.exports = {
   read: [asyncErrorBoundary(reservationExists), read],
   list: [asyncErrorBoundary(list)],
-  create: [hasRequiredProperties, asyncErrorBoundary(create)],
+  create: [hasRequiredProperties, checkReservationForClosedDay, checkReservationForPastDates, asyncErrorBoundary(create)],
 };
