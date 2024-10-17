@@ -7,11 +7,11 @@ const create = reservation => {
         .then((createdReservation) => createdReservation[0]);
 };
 
-const read = (reservation_date)=> {
+const readReservations = (reservation_date)  => {
     return knex("reservations as r")          
             .select("r.*")
             .where({ reservation_date })
-            .orderBy("r.reservation_time");                
+            .orderBy("r.reservation_time");            
 }
 
 const list = () => {
@@ -20,8 +20,16 @@ const list = () => {
         .orderBy("r.reservation_time");
 }
 
+const readReservation = (reservation_id)=> {
+    return knex("reservations as r")          
+            .select("r.*")
+            .where({ "r.reservation_id": reservation_id }) 
+            .first();          
+}
+
 module.exports = {
     create,
-    read,
+    readReservations,
+    readReservation,
     list
 };
