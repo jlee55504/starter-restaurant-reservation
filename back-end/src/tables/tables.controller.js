@@ -75,8 +75,8 @@ const destroy = async (req, res) => {
         reservation_id: null,
     }
     await seatsService.destroy(table, reservationStatus);
-    await seatsService.create(tableNowAvailable);
-    res.sendStatus(204);
+   const d= await seatsService.create(tableNowAvailable);
+    res.status(204).json({ d });
 }
 
 module.exports = {

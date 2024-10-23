@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { listReservations } from "../utils/api";
+
 import ErrorAlert from "../layout/ErrorAlert";
-import { useLocation, useHistory, Link, useParams } from 'react-router-dom';
-import { readReservations, listTables, deleteTableAssignment, updateReservation, readReservationForEdit } from '../utils/api';
-import { previous, today } from '../utils/date-time';
-import { next } from '../utils/date-time';
+import { useHistory, useParams } from 'react-router-dom';
+import { updateReservation, readReservationForEdit } from '../utils/api';
 import { Button, Card } from "react-bootstrap";
 
 function EditReservation() {
-    const [reservation, setReservation] = useState([]);
+    //const [reservation, setReservation] = useState([]);
     const [error, setError] = useState(null);
     const [ firstName, setFirstName ] = useState("");
     const [ lastName, setLastName ] = useState("");
@@ -47,7 +45,7 @@ function EditReservation() {
         }
             return reservation;
           })
-            .then(setReservation)
+            //.then(setReservation)
             .catch(setError);
             return ()=> abortController.abort();
     }
@@ -70,6 +68,7 @@ function EditReservation() {
     return (
     <main>
         <h1>Edit Reservation</h1>
+        <ErrorAlert error={error}/> 
             {reservationCanBeEdited ? <div>
                 <Card>
                   <Card.Body>

@@ -86,7 +86,8 @@ const checkReservationForPastDates = (req, res, next) => {
   const reservationDateToCompare = parseInt(reservation_date.replace(/-/g, '\/').split('/').join(''));
   let todaysDate = new Date();
   todaysDate = parseInt(todaysDate.toLocaleDateString('pt-br').split( '/' ).reverse().join(''));
-  if (reservationDateToCompare === todaysDate && currentTime.toLocaleTimeString('en-US', { hour12: false }) > newReservationDate.toLocaleTimeString('en-US', { hour12: false }) || reservationDateToCompare < todaysDate) {
+  //const currentTime = new Date()
+  if (reservationDateToCompare === todaysDate && currentTime > newReservationDate.toLocaleTimeString('en-US', { hour12: false }) || reservationDateToCompare < todaysDate) {
     return next({
       status: 400,
       message: `Only future reservations are allowed.`,

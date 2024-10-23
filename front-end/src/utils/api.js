@@ -2,7 +2,7 @@
  * Defines the base URL for the API.
  * The default values is overridden by the `API_BASE_URL` environment variable.
  */
-import axios from "axios";
+
 import formatReservationDate from "./format-reservation-date";
 import formatReservationTime from "./format-reservation-date";
 
@@ -89,6 +89,13 @@ export const readReservations = async(reservation_dates, signal) => {
     headers,
     signal,
   };
+  if (!Array.isArray(reservation_dates)) {
+   const url = new URL(`${API_BASE_URL}/reservations?date=${(reservation_dates)}`);
+    return await fetchJson(url, options)
+     .then(formatReservationDate)
+     .then(formatReservationTime);
+  }
+ else { 
   let reservations;
   let url;
   for (const reservation_date of reservation_dates) {
@@ -97,8 +104,8 @@ export const readReservations = async(reservation_dates, signal) => {
       .then(formatReservationDate)
       .then(formatReservationTime);
   };
-
   return Promise.all(reservations);
+}
 };
 
 export const readReservation = async (reservation_id, signal) => {
@@ -111,6 +118,31 @@ export const readReservation = async (reservation_id, signal) => {
   return await fetchJson(url, options)
     .then(formatReservationDate)
     .then(formatReservationTime);
+}
+
+export const findReservationsById = async (reservation_ids, signal) => {
+  console.log(reservation_ids)
+  const options = {
+    method: "GET",
+    headers,
+    signal,
+  };
+  if (!Array.isArray(reservation_ids)) {
+    const url = new URL(`${API_BASE_URL}/reservations/${(reservation_ids)}`);
+     return await fetchJson(url, options)
+      .then(formatReservationDate)
+      .then(formatReservationTime);
+   }
+   else { 
+    let reservations = reservation_ids.map(async(reservation) => {
+      const  url = new URL(`${API_BASE_URL}/reservations/${reservation}`);
+       return reservations = await fetchJson(url, options)
+        .then(formatReservationDate)
+        .then(formatReservationTime);
+    });
+
+    return Promise.all(reservations);
+  }
 }
 
 export async function makeNewReservation (reservation, signal) {
@@ -194,8 +226,6 @@ export const searchForReservation = async (mobile_number, signal) => {
     .then(formatReservationTime);
 }
 
-/*export const editReservation = async () => {
-  } */
 
 export const readReservationForEdit = async (reservation_id, signal) => {
    const url = new URL(`${API_BASE_URL}/reservations/${reservation_id}`);

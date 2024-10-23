@@ -43,6 +43,14 @@ function ReservationSeats() {
         readReservation(reservationId, abortController.signal)
             .then(setReservation) // Updates the reservation state with fetched data
             .then(() => listTables(abortController.signal)) // After fetching reservation, fetches tables
+            .then((tables) => {
+                const availableTables = [];
+                if (tables.length === 0) return [];
+                for (const table of tables) {
+                    if (!table.reservation_id) availableTables.push(table);
+                };
+                 return availableTables;
+            })
             .then(setTables) // Updates the tables state with fetched data
             .catch(setError); // Catches and sets any errors that occur during fetching
 
@@ -121,7 +129,7 @@ function ReservationSeats() {
             <h1>Seat Reservation</h1>
             {/* Displays any error messages */}
             <ErrorAlert error={error} />
-            <form onSubmit={handleSubmit}>
+           {tables.length > 0 ? <form onSubmit={handleSubmit}>
                 <div className="form-group">
                     {/* Label and select dropdown for choosing a table */}
                     <label htmlFor="table_id">
@@ -160,7 +168,7 @@ function ReservationSeats() {
                         Submit
                     </Button>
                 </div>
-            </form>
+            </form>: <h6>No tables are available</h6>}
         </main>
     );
 }

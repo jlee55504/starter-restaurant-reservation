@@ -1,20 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { listReservations } from "../utils/api";
 import ErrorAlert from "../layout/ErrorAlert";
-import { useLocation, useHistory, Link } from 'react-router-dom';
-import { readReservations, listTables, deleteTableAssignment, updateReservation, searchForReservation } from '../utils/api';
-import { previous, today } from '../utils/date-time';
-import { next } from '../utils/date-time';
-import { Button, Card } from "react-bootstrap";
+import { useHistory } from 'react-router-dom';
+import { searchForReservation } from '../utils/api';
+
+import { Button } from "react-bootstrap";
 import ReservationsList from "../reservations/ReservationsList";
-import { formatAsDate, formatAsTime } from "../utils/date-time";
+
 function SearchForReservation() {
     const [mobileNumber, setMobileNumber] = useState("");
     const [reservations, setReservations] = useState([]);
     const [reservationsError, setReservationsError] = useState(null);
-    const [numberHasBeenSubmitted, setNumberHasBeenSubmitted] = useState(false);
+   // const [numberHasBeenSubmitted, setNumberHasBeenSubmitted] = useState(false);
     const [displayReservations, setDisplayReservations] = useState(false);
-    const [loadReservations, setLoadReservations] = useState(false);
+   // const [loadReservations, setLoadReservations] = useState(false);
+   const [cantFindReservation, setCantFindReservation] = useState("")
     const history = useHistory();
 
    /* useEffect(() => {
@@ -60,7 +59,6 @@ function SearchForReservation() {
         const abortController = new AbortController();
         //console.log(mobileNumber)
         setDisplayReservations(false);
-        setNumberHasBeenSubmitted(true);
         searchForReservation(mobileNumber, abortController.signal)
                         .then ((reservations) => {
                                 for (const reservation of reservations) {
@@ -81,12 +79,17 @@ function SearchForReservation() {
                                                         reservation.reservation_time = `${hours}:${minutes} ${aMPm}`;
                                                     }
                             return reservations;
-                        }).then(setReservations)
+                        })
+                        .then((reservations) => {
+                            if (reservations.length === 0) setCantFindReservation("Reservation could not be found");
+                            return reservations;
+                        })
+                        .then(setReservations)
                         .catch(setReservationsError);
                         setMobileNumber("");
                         return () => abortController.abort();
     }
-// {displayReservations ? <ReservationsList reservationsList={reservations} /> : <h6>No reservations found</h6>}
+
     return (
     <main>
         <h1>Search for a reservation by phone number</h1>
@@ -112,7 +115,8 @@ function SearchForReservation() {
                     </Button>
                 </div>
             </form>
-            {displayReservations ? <ReservationsList reservationsList={reservations} /> : null}
+            {displayReservations && reservations.length > 0 ? <ReservationsList reservationsList={reservations} /> : null}
+            {cantFindReservation !== "" ? <h6>{cantFindReservation}</h6> : null}
         </div>
     </main>
     );
