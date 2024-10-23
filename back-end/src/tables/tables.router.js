@@ -8,6 +8,12 @@ router.route("/")
     .all(methodNotAllowed);
 
 router.route("/:table_id/seat/")
-    .get(controller.read);
+    .get(controller.read)
+    .put(controller.update)
+    .delete(controller.delete)
+    .all(methodNotAllowed);
 
+    router.route("/:table_id/seat")
+        .delete(controller.delete)
+        .all(methodNotAllowed);
 module.exports = router;

@@ -40,7 +40,7 @@ function CreateNewTable () {
                     </input>
                 </label>
                 <label htmlFor="capacity">
-                <input type="capacity" name="capacity" id="capacity" placeholder="Number of people" pattern="[0-9]*" value={ capacity } onChange={ handleChange } min={ 2 }  required></input>
+                <input type="number" name="capacity" id="capacity" placeholder="Number of people" pattern="[0-9]*" value={ capacity } onChange={ handleChange } min={ 2 }  required></input>
                 </label>
                 <div>
                     <Button type="button" className="btn btn-secondary"onClick={() => history.goBack()}>Cancel</Button> 

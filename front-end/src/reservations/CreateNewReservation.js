@@ -4,9 +4,9 @@ import React, { useState } from "react";
 'components' from 'react-router-dom'. */
 import {  useHistory } from "react-router-dom";
 import { Button } from "react-bootstrap";
-import {readReservation} from '../utils/api';
+import { readReservation } from '../utils/api';
 import ErrorAlert from "../layout/ErrorAlert";
-import {makeNewReservation }from '../utils/api';
+import { makeNewReservation }from '../utils/api';
 import { formatAsDate, formatAsTime } from "../utils/date-time";
   
 
@@ -50,13 +50,13 @@ function CreateNewReservation() {
         const todaysDateMinutes = todaysDate.getMinutes();
        // console.log("reservation_time", newReservation.reservation_time)
         //console.log("todaysDate: ",todaysDate.toLocaleTimeString('eo', { hour12: false }))
-        const todaysTime = `${todaysDate.getHours()}:${todaysDate.getMinutes()}`
+        /*const todaysTime = `${todaysDate.getHours()}:${todaysDate.getMinutes()}`
         //console.log(parseInt(newReservation.reservation_time.replace(/:/g, '').split("").join("")))
         console.log(todaysDateHour)
         //console.log(`${newReservationDate.getHours()}: ${newReservationDate.getMinutes()}`)
         console.log(newReservationDateHour)
         console.log(reservationDateToCompare)
-        console.log(newReservationDate.getDay())
+        console.log(newReservationDate.getDay())*/
         //console.log(0 < newReservationDateHour)
         //console.log(newReservationDateHours)
         //console.log( newReservationDateHour < 10)
@@ -70,8 +70,8 @@ function CreateNewReservation() {
             );
         })
         .catch(setApiErrors);
-   
-console.log(todaysDateMinutes < newReservationDateMinutes)
+        const currentTime = new Date();
+/*console.log(todaysDateMinutes < newReservationDateMinutes)
 const currentTime = new Date()
 console.log(todaysDateMinutes)
 console.log(newReservationDateMinutes)
@@ -84,8 +84,8 @@ console.log(todaysDate)
 console.log(newReservationDate.getDay())
 console.log( currentTime.toLocaleTimeString('en-US', { hour12: false })> newReservationDate.toLocaleTimeString('en-US', { hour12: false }))
 console.log(reservationDateToCompare >= todaysDate)
-
-        if (reservationDateToCompare >= todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour > 10 && newReservationDateHour > 21 && currentTime.toLocaleTimeString('en-US', { hour12: false }) > newReservationDate.toLocaleTimeString('en-US', { hour12: false }) ||
+*/
+       /* if (reservationDateToCompare >= todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour > 10 && newReservationDateHour > 21 && currentTime.toLocaleTimeString('en-US', { hour12: false }) > newReservationDate.toLocaleTimeString('en-US', { hour12: false }) ||
         reservationDateToCompare < todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour > 10 && newReservationDateHour < 21 ||
         reservationDateToCompare >= todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour > 21 || 
            reservationDateToCompare >= todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour === 21 && newReservationDateMinutes > 30 ||
@@ -96,7 +96,26 @@ console.log(reservationDateToCompare >= todaysDate)
         //reservationDateToCompare >= todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour === 21 && newReservationDateMinutes < 30 && todaysDateHour === 21 && currentTime.toLocaleTimeString('en-US', { hour12: false }) > newReservationDate.toLocaleTimeString('en-US', { hour12: false })
         ) {
             setError(new Error("Only future reservations are allowed. "));
-        }if (//reservationDateToCompare < todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour > 21 || 
+        }*/ 
+           
+           if (newReservationDate.getDay() === 2) {
+              errorsArray.push(new Error("This restaurant is closed on Tuesdays. "));
+           };
+            if (newReservationDateHour < 10 || newReservationDateHour === 10 && newReservationDateMinutes < 30) {
+                errorsArray.push(new Error("This restaurant is closed before before 10:30 AM. "));
+            };
+            if (newReservationDateHour > 21 || newReservationDateHour === 21 && newReservationDateMinutes > 30) {
+                errorsArray.push(new Error("It's too late today to book that reservation. "));
+             };
+            if (/*reservationDateToCompare >= todaysDate && newReservationDateHour > 10 && newReservationDateHour <= 21 && newReservationDateMinutes < 30 && currentTime.toLocaleTimeString('en-US', { hour12: false }) > newReservationDate.toLocaleTimeString('en-US', { hour12: false })*/ reservationDateToCompare === todaysDate && currentTime.toLocaleTimeString('en-US', { hour12: false }) > newReservationDate.toLocaleTimeString('en-US', { hour12: false }) || reservationDateToCompare < todaysDate) {
+                console.log("reservationDateToCompare: ", reservationDateToCompare);
+                console.log("todaysDate", todaysDate);
+                console.log(reservationDateToCompare >= todaysDate)
+                console.log(currentTime.toLocaleTimeString('en-US', { hour12: false }) > newReservationDate.toLocaleTimeString('en-US', { hour12: false }))
+                errorsArray.push(new Error("Only future reservations are allowed. "));
+            };
+             
+       /* if (//reservationDateToCompare < todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour > 21 || 
        // reservationDateToCompare < todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour === 21 && newReservationDateMinutes > 30 ||
        // reservationDateToCompare < todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour < 10 && 0 < newReservationDateHour ||
        // reservationDateToCompare < todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour < 10 && 0 > newReservationDateHour && todaysDateMinutes < newReservationDateMinutes ||
@@ -148,7 +167,8 @@ console.log(reservationDateToCompare >= todaysDate)
            errorsArray.push(new Error("This restaurant is closed on Tuesdays. "));
             errorsArray.push(new Error("It's too late today to book that reservation. Please try again. "));
             setError(errorsArray);
-          }*/ else if (newReservationDate.getDay() === 2 && reservationDateToCompare >= todaysDate && newReservationDateHour < 10 //&& 0 > newReservationDateHour && todaysDateMinutes < newReservationDateMinutes 
+          }*/
+         /* else if (newReservationDate.getDay() === 2 && reservationDateToCompare >= todaysDate && newReservationDateHour < 10 //&& 0 > newReservationDateHour && todaysDateMinutes < newReservationDateMinutes 
           || 
           //newReservationDate.getDay() === 2 && reservationDateToCompare >= todaysDate && newReservationDateHour < 10 && todaysDateMinutes > newReservationDateMinutes ||
           newReservationDate.getDay() === 2 && reservationDateToCompare >= todaysDate && newReservationDateHour === 10 && newReservationDateMinutes < 30) {
@@ -169,7 +189,8 @@ console.log(reservationDateToCompare >= todaysDate)
             errorsArray.push(new Error("This restaurant is closed before before 10:30 AM. Please try again. "));
             setError(errorsArray);
           }*/
-           else if (reservationDateToCompare >= todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour < 10 ||
+
+         /*  else if (reservationDateToCompare >= todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour < 10 ||
            //reservationDateToCompare >= todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour < 10 && todaysDateMinutes > newReservationDateMinutes || 
            reservationDateToCompare >= todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour === 10 && newReservationDateMinutes < 30// && todaysDateMinutes < newReservationDateMinutes
         ) {
@@ -177,7 +198,8 @@ console.log(reservationDateToCompare >= todaysDate)
           }/* if (reservationDateToCompare > todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour === 10 && newReservationDateMinutes < 30)  {
             setError(new Error("This restaurant is closed before before 10:30 AM. Please try again. "));
           }*/
-           else if (reservationDateToCompare >= todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour > 21 || 
+
+         /*  else if (reservationDateToCompare >= todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour > 21 || 
            reservationDateToCompare >= todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour === 21 && newReservationDateMinutes > 30 //||
            //reservationDateToCompare >= todaysDate && newReservationDate.getDay() !== 2 && newReservationDateHour === 21 && newReservationDateMinutes < 30 && todaysDateMinutes < newReservationDateMinutes
            ) {
@@ -217,6 +239,13 @@ console.log(reservationDateToCompare >= todaysDate)
                 errorsArray.push(new Error("It's too late today to book that reservation. Please try again. "));
                 setError(errorsArray);
             }*/
+           if (errorsArray.length === 0) {
+            setError(null)
+           } else {
+            errorsArray.push(new Error("Please try again."));
+            console.log(errorsArray)
+            setError(errorsArray);
+           }
 
         setFirstName("");
         setLastName("");
@@ -227,8 +256,8 @@ console.log(reservationDateToCompare >= todaysDate)
     }
     return (
       <main>
-            <ErrorAlert error={error} />
             <h1>New Reservation</h1>
+            <ErrorAlert error={error} />
             <form onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="first_name">
