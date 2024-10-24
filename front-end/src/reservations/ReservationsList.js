@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { listReservations } from "../utils/api";
 import ErrorAlert from "../layout/ErrorAlert";
-import { useLocation, useHistory, useParams } from 'react-router-dom';
+import { useLocation, useHistory } from 'react-router-dom';
 import { readReservations, updateReservation, findReservationsById } from '../utils/api';
 import { Button, Card } from "react-bootstrap";
 
@@ -156,14 +156,14 @@ useEffect(() => {
   }
   return reservationsList;
   }
-  function loadDashboard() {
+/*  function loadDashboard() {
     const abortController = new AbortController();
     setReservationsError(null);
     listReservations({ date: date }, abortController.signal)
       .then(setReservations)
       .catch(setReservationsError);
     return () => abortController.abort();
-  }
+  }*/
 
 
     function updateReservationStatus(reservation) {

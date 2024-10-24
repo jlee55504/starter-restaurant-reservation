@@ -57,7 +57,7 @@
     "puppeteer": "^23.5.1",
     "react-phone-number-input": "^3.4.8",
     "react-router-dom": "^6.26.2",
-    "react-scripts": "^5.0.1",
+    "react-scripts": "^3.0.1",
     "webpack": "^5.95.0"
   },
   "devDependencies": {

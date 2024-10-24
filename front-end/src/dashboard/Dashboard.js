@@ -94,7 +94,7 @@ function Dashboard({ date, reservationStatus= false }) {
               if (reservation.reservation_date === date) { 
                 return reservation.reservation_date;
               };
-              //return reservation;
+              return reservation;
             }) 
           }; console.log(todaysReservations)
            if (reservations.length === 0 || todaysReservations.length === 0) {

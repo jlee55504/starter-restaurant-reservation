@@ -44,7 +44,7 @@ function CreateNewReservation() {
         const newReservationDate = new Date(`${newReservation.reservation_date} ${newReservation.reservation_time}`);
         const newReservationDateHour = newReservationDate.getHours();
         const newReservationDateMinutes = newReservationDate.getMinutes();
-        let reservationDateToCompare = parseInt(newReservation.reservation_date.replace(/-/g, '\/').split('/').join(''));
+        let reservationDateToCompare = parseInt(newReservation.reservation_date.replace(/-/g, '').split('/').join(''));
         let todaysDate = new Date();
      //   const todaysDateHour = todaysDate.getHours();
       //  const todaysDateMinutes = todaysDate.getMinutes();
@@ -85,7 +85,8 @@ function CreateNewReservation() {
             if (newReservationDateHour > 21 || (newReservationDateHour === 21 && newReservationDateMinutes > 30)) {
                 errorsArray.push(new Error("It's too late today to book that reservation. "));
              };
-            if (/*reservationDateToCompare >= todaysDate && newReservationDateHour > 10 && newReservationDateHour <= 21 && newReservationDateMinutes < 30 && currentTime.toLocaleTimeString('en-US', { hour12: false }) > newReservationDate.toLocaleTimeString('en-US', { hour12: false })*/ (reservationDateToCompare === todaysDate && currentTime.toLocaleTimeString('en-US', { hour12: false }) > newReservationDate.toLocaleTimeString('en-US', { hour12: false })) || reservationDateToCompare < todaysDate) {
+            if (/*reservationDateToCompare >= todaysDate && newReservationDateHour > 10 && newReservationDateHour <= 21 && newReservationDateMinutes < 30 && currentTime.toLocaleTimeString('en-US', { hour12: false }) > newReservationDate.toLocaleTimeString('en-US', { hour12: false })*/
+               (reservationDateToCompare === todaysDate && currentTime.toLocaleTimeString('en-US', { hour12: false }) > newReservationDate.toLocaleTimeString('en-US', { hour12: false })) || reservationDateToCompare < todaysDate) {
                 console.log("reservationDateToCompare: ", reservationDateToCompare);
                 console.log("todaysDate", todaysDate);
                 console.log(reservationDateToCompare >= todaysDate)
