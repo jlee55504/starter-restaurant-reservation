@@ -28,7 +28,7 @@ const update = updatedTable => {
         .then((updatedRecords) => updatedRecords[0]);
 }
 
-const destroy = (table, reservationStatus) => {
+const destroy = (table) => {
     /*return knex("seats")
         .select("reservation_id")
         .where({ "reservation_id": table.reservation_id })
