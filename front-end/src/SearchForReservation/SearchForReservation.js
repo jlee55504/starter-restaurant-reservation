@@ -10,38 +10,12 @@ function SearchForReservation() {
     const [mobileNumber, setMobileNumber] = useState("");
     const [reservations, setReservations] = useState([]);
     const [reservationsError, setReservationsError] = useState(null);
-   // const [numberHasBeenSubmitted, setNumberHasBeenSubmitted] = useState(false);
     const [displayReservations, setDisplayReservations] = useState(false);
-   // const [loadReservations, setLoadReservations] = useState(false);
-   const [cantFindReservation, setCantFindReservation] = useState("")
+    // Displays message if the no reservation's contain the inputted mobile number 
+    const [cantFindReservation, setCantFindReservation] = useState("")
     const history = useHistory();
 
-   /* useEffect(() => {
-        if (!numberHasBeenSubmitted) {
-        return;
-        } else {
-            setLoadReservations(true);
-         }
-        }, [numberHasBeenSubmitted]);
-
-        useEffect(() => {
-            if (!loadReservations) {
-                return;
-                } else {
-                    console.log(mobileNumber)
-                    const abortController = new AbortController();
-                    setReservationsError(null);
-                    setDisplayReservations(true);
-                    //setLoadReservations(false);
-                    setNumberHasBeenSubmitted(false);
-                    searchForReservation(mobileNumber, abortController.signal)
-                        .then(setReservations)
-                        //.then(console.log)
-                        .catch(setReservationsError);
-                        setMobileNumber("");
-                    return () => abortController.abort();
-                }
-        }, [numberHasBeenSubmitted, loadReservations])*/
+  
     useEffect(() => {
         if (reservations.length === 0) return; 
         else {
@@ -54,12 +28,12 @@ function SearchForReservation() {
         }
     }
 
-    const handleSubmit = event => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
         const abortController = new AbortController();
-        //console.log(mobileNumber)
+        setReservationsError(null)
         setDisplayReservations(false);
-        searchForReservation(mobileNumber, abortController.signal)
+        await searchForReservation(mobileNumber, abortController.signal)
                         .then ((reservations) => {
                                 for (const reservation of reservations) {
                                     const newReservationDate = new Date(`${reservation.reservation_date} ${reservation.reservation_time}`);
@@ -81,7 +55,7 @@ function SearchForReservation() {
                             return reservations;
                         })
                         .then((reservations) => {
-                            if (reservations.length === 0) setCantFindReservation("Reservation could not be found");
+                            if (reservations.length === 0) setCantFindReservation("No reservations found");
                             return reservations;
                         })
                         .then(setReservations)
@@ -96,11 +70,13 @@ function SearchForReservation() {
         <ErrorAlert error={reservationsError} />
         <div>
             <form onSubmit={ handleSubmit }>
+                <div className="form-group">
                 <label htmlFor="mobile_number">
                     <input type="text" name="mobile_number" id="mobile_number" placeholder="Enter a customer's phone number" value={ mobileNumber } onChange={ handleChange }  required></input>
                 </label>
+                </div>
                 {/* Container for the Cancel and Submit buttons */}
-                <div className="d-flex justify-content-between mt-3">
+                <div className="form-group">
                     {/* Cancel Button: Navigates back to the previous page */}
                     <Button
                         type="button"

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import { Button } from "react-bootstrap";
 import ErrorAlert from "../layout/ErrorAlert";
-import { readReservation, listTables, assignTable } from "../utils/api";
+import { readReservation, listTables, assignTable, updateReservation } from "../utils/api";
 
 /**
  * ReservationSeats Component
@@ -21,6 +21,8 @@ function ReservationSeats() {
     const { reservationId } = useParams();
     /* State to store the selected table's ID */
     const [selectedTable, setSelectedTable] = useState("");
+    // Code in case the "Dashboard" 'component' needs to display a certain date
+    // const [date, setDate] = useState(null)
 
     /**
      * useEffect Hook
@@ -35,21 +37,23 @@ function ReservationSeats() {
      * loadReservationSeats Function
      * Fetches the reservation details and the list of tables from the backend.
      */
-    const loadReservationSeats = () => {
+    const loadReservationSeats = async () => {
         const abortController = new AbortController(); // Allows us to cancel the fetch if the component unmounts
         setError(null); // Resets any existing errors
 
+        // This code can be edited to only display the tables that can handle the reservation's number of people 
         /* Fetches reservation details */
-        readReservation(reservationId, abortController.signal)
+        await readReservation(reservationId, abortController.signal)
             .then(setReservation) // Updates the reservation state with fetched data
             .then(() => listTables(abortController.signal)) // After fetching reservation, fetches tables
             .then((tables) => {
                 const availableTables = [];
                 if (tables.length === 0) return [];
                 for (const table of tables) {
-                    if (!table.reservation_id) availableTables.push(table);
+                    //if (!table.reservation_id) availableTables.push(table);
                 };
-                 return availableTables;
+                 //return availableTables;
+                 return tables;
             })
             .then(setTables) // Updates the tables state with fetched data
             .catch(setError); // Catches and sets any errors that occur during fetching
@@ -87,33 +91,36 @@ function ReservationSeats() {
         /* Finds the selected table object from the tables array */
         const table = tables.find((t) => t.table_id === Number(selectedTable));
 
-        /* Validation: Check if the selected table exists */
-        if (!table) {
-            setError({ message: "Selected table does not exist." });
-            return;
-        }
-
-        /* Validation: Check if the table is already occupied */
-        if (table.reservation_id) {
-            setError({ message: "This table is already occupied." });
-            return;
-        }
-
-        /* Validation: Check if table capacity is sufficient for the reservation's party size */
-        if (table.capacity < reservation.people) {
-            setError({ message: "Table capacity is insufficient for the reservation." });
-            return;
-        }
+        
 
         /* Prepares the data payload for the API request */
         const data = { reservation_id: reservation.reservation_id };
 
         try {
             /* Calls the assignTable API function to assign the reservation to the selected table */
-            await assignTable(selectedTable, data, abortController.signal).then(() => history.push("/dashboard"))
+            await assignTable(selectedTable, data, abortController.signal)
+               // .catch(setError)
+            //.then(() => history.push("/dashboard"))
+            /* Validation: Check if the selected table exists */
+            /*if (!table) {
+                setError({ message: "Selected table does not exist." });
+                return;
+            }
+    
+            /* Validation: Check if the table is already occupied */
+           /* if (table.reservation_id) {
+                setError({ message: "This table is already occupied." });
+                return;
+            }*/
+    
+            /* Validation: Check if table capacity is sufficient for the reservation's party size */
+           /* if (table.capacity < reservation.people) {
+                setError({ message: "Table capacity is insufficient for the reservation." });
+                return;
+            } */
             /* Navigates to the /dashboard page upon successful assignment */
              history.push("/dashboard");
-             return;
+             return () => abortController.abort()
         } catch (apiError) {
             /* Catches and sets any errors returned from the API */
             setError(apiError);
@@ -159,7 +166,14 @@ function ReservationSeats() {
                     <Button
                         type="button"
                         className="btn btn-secondary"
-                        onClick={() => history.goBack()}
+                        onClick={async () => {
+                            const abortController = new AbortController();
+                            const newReservationStatus = {status: "booked"};
+                            await updateReservation(reservationId, newReservationStatus, abortController.signal)
+                                .catch(setError);
+                            history.goBack();
+                        }
+                    }
                     >
                         Cancel
                     </Button>

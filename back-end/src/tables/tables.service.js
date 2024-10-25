@@ -21,15 +21,29 @@ const create = reservation => {
 };
 
 const update = updatedTable => {
-    return knex("seats")
+    /*return knex("seats")
         .select("*")
         .where({ "table_id": updatedTable.table_id })
         .update( updatedTable, "*")
-        .then((updatedRecords) => updatedRecords[0]);
+        .then((updatedRecords) => updatedRecords[0]);*/
+        return knex.transaction((trx) => {
+            trx("reservations")
+                .where({ "reservation_id": updatedTable.reservation_id })
+                .update("status", "seated")
+                .then((updatedRecords) => updatedRecords[0])
+                .then(() => {
+                    return trx("seats")
+                    .where({ "table_id": updatedTable.table_id })
+                    .update( updatedTable, "*")
+                    .then((updatedRecords) => updatedRecords[0]);
+                })
+                .then(trx.commit)
+                .catch(trx.rollback);
+        })
 }
 
 const destroy = (table) => {
-    /*return knex("seats")
+  /*  return knex("seats")
         .select("reservation_id")
         .where({ "reservation_id": table.reservation_id })
         .del();*/
@@ -46,13 +60,19 @@ const destroy = (table) => {
                 })
                 .then(trx.commit)
                 .catch(trx.rollback);
-        })
+        });
 }
-
+const readReservation = reservation_id => {
+    return knex("reservations as r")          
+            .select("r.*")
+            .where({ "r.reservation_id": reservation_id }) 
+            .first();          
+}
 module.exports = { 
     read,
     list,
     create,
     update,
     destroy,
+    readReservation,
 }

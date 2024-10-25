@@ -4,6 +4,7 @@ import ErrorAlert from "../layout/ErrorAlert";
 import { useLocation, useHistory } from 'react-router-dom';
 import { readReservations, updateReservation, findReservationsById } from '../utils/api';
 import { Button, Card } from "react-bootstrap";
+import { today } from "../utils/date-time";
 
 import useQuery from '../utils/useQuery';
 function ReservationsList({ reservationsList = [] }) {
@@ -13,14 +14,14 @@ function ReservationsList({ reservationsList = [] }) {
     const [reservationsError, setReservationsError] = useState(null);
     const history = useHistory();
     const [reservationCancelled, setReservationCancelled] = useState(false);
-    
+    const [reservationFinished, setReservationFinished] = useState(false);
     const search = useLocation().search;
     const queryParams = new URLSearchParams(search).get("date");
-//    const [updateReservations, setUpdateReservations] = useState(false);
+    const [updateTables, setUpdateTables] = useState(false);
     let date = query.get("date");
     let searchByPhone = window.location.pathname;
-    console.log(searchByPhone === "/search")
-    useEffect(() => {
+   
+  useEffect(() => {
       if (!reservationsList || reservationsList.length === 0) {
         setReservations([]);
       } 
@@ -30,19 +31,32 @@ function ReservationsList({ reservationsList = [] }) {
     }
 }, [reservationsList]);
 
+// Updates the reservations list when a reservation has been cancelled
 useEffect(() => {
     if (!reservationCancelled) return;
     else {
             filterReservationsForStatus();
-            setReservationCancelled(false); 
+            setReservationCancelled(false);
     }
   }, [reservationCancelled]);
+
+// Updates the tables list when a reservation's status has been changed to "finished" using the "tables" query parameter
+  useEffect(() => {
+if (!updateTables) return;
+else {
+  setUpdateTables(false);
+  const todaysDate = today();
+  if (!date) {
+    history.push(`/dashboard?date=${todaysDate}&tables=${true}`);
+  }
+  else history.push(`/dashboard?date=${date}&tables=${true}`)
+}
+  }, [updateTables])
 
   function filterReservationsForStatus() {
         const abortController = new AbortController();
         if (!date && searchByPhone !== "/search"){ 
           const date = reservationsList[0].reservation_date;
-          console.log(date)
           listReservations({date}, abortController.signal)
           .then((reservations) => {
             if (reservations.length === 1) return readReservations(date, abortController.signal)
@@ -61,7 +75,6 @@ useEffect(() => {
                 };
     })
           .then((reservations) => { 
-            console.log(reservations)
             if (reservations.length > 0) {
             return reservations.filter(reservation => reservation.status !== "cancelled" && reservation.status !== "finished")
           } else return [];
@@ -83,7 +96,6 @@ useEffect(() => {
           console.log(reservationIds)
           findReservationsById(reservationIds, abortController.signal)
           .then((reservations) => { 
-            console.log(reservations.length)
             if (reservations.length > 0) {
             return reservations;
           } else return [];
@@ -110,16 +122,14 @@ useEffect(() => {
                 return reservation.reservation_date;
               };
               return reservation;
-            }); console.log(reservations)
+            }); 
           }; if (reservations.length === 0) {
               return [];
             } else {
-              console.log(reservations)
               return readReservations(reservations, abortController.signal);
               };
   })
         .then((reservations) => { 
-          console.log(reservations)
           if (reservations.length > 0) {
           return reservations.filter(reservation => reservation.status !== "cancelled" && reservation.status !== "finished")
         } else return [];
@@ -128,7 +138,7 @@ useEffect(() => {
           if (reservations.length > 0 ) return setReservationDateAndTime(reservations)
             else return []
         })
-        .then((reservations) =>{console.log(reservations); return reservations})
+        //.then((reservations) =>{console.log(reservations); return reservations})
         .then(setReservations)
         .catch(setReservationsError)
         return () => abortController.abort();}
@@ -136,7 +146,6 @@ useEffect(() => {
       
 
   function setReservationDateAndTime(reservationsList) {
-   
     for (const reservation of reservationsList) {
         const newReservationDate = new Date(`${reservation.reservation_date} ${reservation.reservation_time}`);
         const month = newReservationDate.getMonth() + 1;
@@ -156,26 +165,25 @@ useEffect(() => {
   }
   return reservationsList;
   }
-/*  function loadDashboard() {
+  async function deleteReservation(reservation) {
     const abortController = new AbortController();
-    setReservationsError(null);
-    listReservations({ date: date }, abortController.signal)
-      .then(setReservations)
-      .catch(setReservationsError);
-    return () => abortController.abort();
-  }*/
+        const newReservationStatus = { status: "finished" };   
+        await updateReservation(reservation.reservation_id, newReservationStatus, abortController.signal)
+          .catch(setReservationsError);
+          setUpdateTables(true);
+          return () => abortController.abort();
+  }
 
-
-    function updateReservationStatus(reservation) {
+    async function updateReservationStatus(reservation) {
         const abortController = new AbortController();
         const newReservationStatus = { status: "seated" };
-        updateReservation(reservation.reservation_id, newReservationStatus, abortController.signal)
+        await updateReservation(reservation.reservation_id, newReservationStatus, abortController.signal)
           .catch(setReservationsError);
         history.push(`/reservations/${reservation.reservation_id}/seat`);
         return () => abortController.abort();
       }
       
-   async function cancelReservation (reservation) {
+   async function cancelReservation(reservation) {
         const abortController = new AbortController();
         const confirm = window.confirm("Do you want to cancel this reservation? This cannot be undone.");
         if (confirm === true) {
@@ -186,27 +194,7 @@ useEffect(() => {
           return () => abortController.abort();
         } else return;
       }
-     console.log(reservations.length) 
-      /*const handleClick = async (reservation_id) => {
-        const abortController = new AbortController();
-        setReservationsError(null);
-
-        if (window.confirm(
-            "Do you want to cancel this reservation? This cannot be undone.")){
-                try{
-                    await updateReservationStatus(
-                            reservation_id, 
-                            "cancelled", 
-                            abortController.signal);
-                    loadDashboard();
-                } catch (error) {
-                    console.error("Cancelling reservation failed!", error);
-                    setReservationsError(error);
-                } finally {
-                    abortController.abort();
-                }
-              }
-            }*/
+     
       //{reservationCancelled ? <Dashboard date={query.get("date")} reservationCancelled={reservationCancelled} /> : null}
 //console.log(reservations)
 /*<Button className="btn btn-secondary" type="button" onClick={() => history.push(`/reservations/${reservation.reservation_id}/edit`)}>Edit</Button>
@@ -219,7 +207,10 @@ useEffect(() => {
                     :
                     null
                 }
-            </td> */
+            </td> 
+            
+            {reservation.status === "seated" ? <Button className="btn btn-primary" type="button" onClick={() => deleteReservation(reservation)}>Finish</Button>: null}
+            */
     return (
         <div>
             <ErrorAlert error={reservationsError} />
@@ -235,11 +226,11 @@ useEffect(() => {
             <Card.Text>Number of people: {reservation.people}</Card.Text>
             <Card.Text data-reservation-id-status={reservation.reservation_id}>Status: {reservation.status}</Card.Text>
             {reservation.status === "booked" ? <Button className="btn btn-primary" type="button" onClick={() => updateReservationStatus(reservation)}>Seat</Button>: null}
+            {reservation.status === "booked" ? <Button className="btn btn-secondary" type="button" onClick={() => history.push(`/reservations/${reservation.reservation_id}/edit`)}>Edit</Button>: null}
             <Button data-reservation-id-cancel={reservation.reservation_id} className="btn btn-danger" type="button" onClick={() => cancelReservation(reservation)}>Cancel</Button>
           </Card.Body>
         </Card>
       }) : <h6>No reservations for this day</h6>}
-     
         </div>
     )
 }

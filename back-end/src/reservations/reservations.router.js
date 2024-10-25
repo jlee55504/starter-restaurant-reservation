@@ -7,9 +7,7 @@
 const router = require("express").Router();
 const controller = require("./reservations.controller");
 const methodNotAllowed =  require("../errors/methodNotAllowed");
-router.route(`/?`)
-//.get(controller.search)  
-//.get(controller.readReservations)
+
 router.route("/")
    .get(controller.search)
    .get(controller.readReservations)
@@ -21,8 +19,6 @@ router.route("/:reservation_id")
     .get(controller.readReservation)
     .all(methodNotAllowed);
    
-router.route("/:reservation_id/edit") 
-
 router.route("/:reservation_id/seat")
     .get(controller.readReservation)
     .all(methodNotAllowed);

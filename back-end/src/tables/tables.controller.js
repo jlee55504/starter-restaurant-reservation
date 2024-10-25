@@ -3,7 +3,8 @@ const seatsService = require("./tables.service");
 const hasProperties = require("../errors/hasProperties");
 const { Resolver } = require("webpack");
 const hasRequiredProperties = hasProperties("table_name", "capacity", "reservation_id");
-const updatedTableHasRequiredProperties = hasProperties("reservation_id")
+//import { readReservation } from "../reservations/reservations.controller";
+//const updatedTableHasRequiredProperties = hasProperties("reservation_id")
 // Middleware functions
 const seatExists = async (req, res, next) => {
     const tableExists = await seatsService.read(req.params.table_id);
@@ -18,16 +19,31 @@ const seatExists = async (req, res, next) => {
     });
 };
 
- const isTableOccupied = async (req, res, next) => {
+const tableCapacityIsLessThanPeople = async (req, res, next) => {    
+    const reservation = await seatsService.readReservation(req.body.data.reservation_id)
+   if (reservation) {
+    if (reservation.people > res.locals.table.capacity) {
+      return next({
+        status: 400,
+        message: "Table capacity is insufficient for the reservation."
+      })   
+   } else return next()
+}
+    next({
+        status: 404,
+        message: "Reservation cannot be found.",
+    });
+}
+
+ const tableIsOccupied = async (req, res, next) => {
     const tableExists = await seatsService.read(req.params.table_id);
     if (tableExists) {
-        if (!tableExists.reservation_id) {
+        if (tableExists.reservation_id) {
           return next({
             status:400,
-            message: "This table is not occupied.",
+            message: "This table is already occupied.",
           });
-        };
-        return next();
+        } else return next();
     };
     next({
         status: 404,
@@ -35,6 +51,21 @@ const seatExists = async (req, res, next) => {
     });
     }
 
+    const tableIsNotOccupied = async (req, res, next) => {
+        const tableExists = await seatsService.read(req.params.table_id);
+        if (tableExists) {
+            if (!tableExists.reservation_id) {
+              return next({
+                status:400,
+                message: "This table is not occupied.",
+              });
+            } else return next();
+        };
+        next({
+            status: 404,
+            message: "Table cannot be found.",
+        });       
+    }
 
 // Route handlers
 const read = (req, res) => {
@@ -75,14 +106,14 @@ const destroy = async (req, res) => {
         reservation_id: null,
     }
     await seatsService.destroy(table, reservationStatus);
-   const d= await seatsService.create(tableNowAvailable);
-    res.status(204).json({ d });
+   const replaceSeat = await seatsService.create(tableNowAvailable);
+    res.status(204).json({ replaceSeat });
 }
 
 module.exports = {
     read: [asyncErrorBoundary(seatExists), read],
-    create: [hasRequiredProperties, updatedTableHasRequiredProperties, asyncErrorBoundary(create)],
+    create: [hasRequiredProperties, asyncErrorBoundary(create)],
     list: [asyncErrorBoundary(list)],
-    update: [asyncErrorBoundary(seatExists), asyncErrorBoundary(update)],
-    delete: [asyncErrorBoundary(seatExists), asyncErrorBoundary(isTableOccupied), asyncErrorBoundary(destroy)]
+    update: [asyncErrorBoundary(seatExists), asyncErrorBoundary(tableCapacityIsLessThanPeople), asyncErrorBoundary(tableIsOccupied), asyncErrorBoundary(update)],
+    delete: [asyncErrorBoundary(seatExists), asyncErrorBoundary(tableIsNotOccupied), asyncErrorBoundary(destroy)]
 }

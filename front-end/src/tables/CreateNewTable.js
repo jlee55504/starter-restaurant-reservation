@@ -35,14 +35,18 @@ function CreateNewTable () {
             <ErrorAlert error={ error } />
             <h1>New Table</h1>
             <form onSubmit={ handleSubmit }>
+                <div class="form-group">
                 <label htmlFor="table_name">
                     <input type="text" name="table_name" id="table_name" placeholder="Table name" value={ tableName } onChange={ handleChange } minLength={ 2 } required>
                     </input>
                 </label>
+                </div>
+                <div class="form-group">
                 <label htmlFor="capacity">
                 <input type="number" name="capacity" id="capacity" placeholder="Number of people" pattern="[0-9]*" value={ capacity } onChange={ handleChange } min={ 2 }  required></input>
                 </label>
-                <div>
+                </div>
+                <div class="form-group">
                     <Button type="button" className="btn btn-secondary"onClick={() => history.goBack()}>Cancel</Button> 
                     <Button type="submit" className="btn btn-primary" >Submit</Button>  
                 </div>

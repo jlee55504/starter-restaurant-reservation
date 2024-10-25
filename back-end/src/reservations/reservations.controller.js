@@ -19,21 +19,26 @@ const hasRequiredProperties = hasProperties(
 
   const reservationsExist = async (req, res, next) => {
     const { date, mobile_number } = req.query;
-    let reservation
-    if (!mobile_number && date && !req.params.reservation_id) reservation = await reservationsService.readReservations(req.query.date);
-    else if (!date && mobile_number && !req.params.reservation_id) reservation = await reservationsService.search(req.query.mobile_number);
+    let reservation;
+    if (!mobile_number && date && !req.params.reservation_id) reservation = await reservationsService.readReservations(date);
+    else if (!date && mobile_number && !req.params.reservation_id) reservation = await reservationsService.search(mobile_number);
     else if (!date && !mobile_number && !req.params.reservation_id) return next();
     //else reservation = await reservationsService.list();
     if (reservation) {
+      // This code may need to be deleted to pass the tests
+     /* if (mobile_number && reservation.length === 0) {
+          return next({
+            status: 404,
+            message: "No reservations found",
+          });
+      }*/
       res.locals.reservation = reservation;
       return next();
     };
-    if (!reservation ) {
       next({
       status: 404,
       message: "Reservation cannot be found.",
     });
-  }
   };
 
   const reservationExists = async (req, res, next) => {
@@ -49,19 +54,136 @@ const hasRequiredProperties = hasProperties(
    });
  };  
 
-const reservationExistsByPhone = async (req, res, next) => {
-    const { mobile_number, date } = req.query;
-    let reservation;
-   if (!date)  reservation = await reservationsService.search(mobile_number);
-    if (reservation) {
+const updatedReservationHasValidProperties = async (req, res, next) => {
+  const { reservation_id } = req.params;
+  const reservation = await reservationsService.readReservation(reservation_id);
+  if (reservation && hasProperties(res.locals.reservation.first_name, res.locals.reservation.last_name, res.locals.reservation.people, res.locals.reservation.mobile_number, res.locals.reservation.reservation_date, res.locals.reservation_time)) {
+    res.locals.reservation = reservation;
+    return next();
+  };
+  next({
+    status: 404,
+    message: "Reservation cannot be found.",
+  });
+}
+
+const checkUpdatedReservationTimeforBeforeOpeningHours = async (req, res, next) => {
+  const { reservation_id } = req.params;
+  const reservation = await reservationsService.readReservation(reservation_id);
+        if (reservation) {
+          const updatedReservationDate = reservation.reservation_date.toString();
+          const updatedReservationTime = reservation.reservation_time.toString();
+          const newReservationDate = new Date(`${updatedReservationDate} ${updatedReservationTime}`);
+          const newReservationDateHour = newReservationDate.getHours();
+          const newReservationDateMinutes = newReservationDate.getMinutes();
+          if (newReservationDateHour < 10 || newReservationDateHour === 10 && newReservationDateMinutes < 30) {
+          return next({
+            status: 400,
+            message: "This restaurant is closed before before 10:30 AM. Please try again. ",
+          });
+        }  else {
+          res.locals.reservation = reservation;
+          return next();
+       }
+      }
+      next({
+        status: 404,
+        message: "Reservation cannot be found.",
+    });
+}
+const checkUpdatedReservationTimeforAfterClosingHours = async (req, res, next) => {
+  const { reservation_id } = req.params;
+  const reservation = await reservationsService.readReservation(reservation_id);
+        if (reservation) {
+          const updatedReservationDate = reservation.reservation_date.toString();
+          const updatedReservationTime = reservation.reservation_time.toString();
+          const newReservationDate = new Date(`${updatedReservationDate} ${updatedReservationTime}`);
+          const newReservationDateHour = newReservationDate.getHours();
+          const newReservationDateMinutes = newReservationDate.getMinutes();
+          if (newReservationDateHour > 21 || newReservationDateHour === 21 && newReservationDateMinutes > 30) {
+          return next({
+            status: 400,
+            message: "It's too late today to book that reservation. Please try again. ",
+          });
+        }  else {
+          res.locals.reservation = reservation;
+          return next();
+       }
+      }
+      next({
+        status: 404,
+        message: "Reservation cannot be found.",
+    });
+}
+
+const checkUpdatedReservationForPastDates = async (req, res, next) => {
+  const { reservation_id } = req.params;
+  const reservation = await reservationsService.readReservation(reservation_id);
+  const currentDate = new Date();
+  const currentTime = currentDate.toLocaleTimeString('en-US', { hour12: false });
+ // const newReservationTime = newReservationDate.toLocaleTimeString('en-US', { hour12: false });
+  let todaysDate = new Date();
+  todaysDate = parseInt(todaysDate.toLocaleDateString('pt-br').split( '/' ).reverse().join(''));
+  if (reservation) {
+    const updatedReservationDate = reservation.reservation_date.toString();
+    const updatedReservationTime = reservation.reservation_time.toString();
+    const newReservationDate = new Date(`${updatedReservationDate} ${updatedReservationTime}`);
+    const reservationDateToCompare = parseInt(updatedReservationDate.replace(/-/g, '\/').split('/').join(''));
+  if (reservationDateToCompare === todaysDate && currentTime > newReservationDate.toLocaleTimeString('en-US', { hour12: false }) || reservationDateToCompare < todaysDate) {
+    return next({
+      status: 400,
+      message: `Only future reservations are allowed.`,
+    });
+  }  else {
+    res.locals.reservation = reservation;
+    return next();
+ }
+} next({
+    status: 404,
+    message: "Reservation cannot be found.",
+});  
+}
+
+const checkUpdatedReservationForClosedDay = async (req, res, next) => {
+  const { reservation_id } = req.params;
+  const reservation = await reservationsService.readReservation(reservation_id);
+  if (reservation) {
+    const updatedReservationDate = reservation.reservation_date.toString();
+    const updatedReservationDateDay = new Date(updatedReservationDate.replace(/-/g, '\/'));
+    if (!updatedReservationDateDay.getDay() === 2) { 
+      return next({
+        status: 400,
+        message: "This restaurant is closed on Tuesdays. Please try again. "
+      });
+  } else {
       res.locals.reservation = reservation;
       return next();
-     };
-     next({
-       status: 404,
-       message: "Reservation cannot be found.",
+   }
+}
+  next({
+    status: 404,
+    message: "Reservation cannot be found.",
+  })
+};
+
+const checkUpdatedReservationForValidInput = async (req, res, next) => {
+  const { reservation_id } = req.params;
+    const reservation = await reservationsService.readReservation(reservation_id);
+  if (reservation){
+    if (reservation.status !== "booked") {
+     return next({
+       status: 400,
+       message: "Only reservations with a status of 'booked' can be edited."
      });
-  } 
+   } else {
+      res.locals.reservation = reservation;
+      return next();
+   }
+  }next({
+    status: 404,
+    message: "Reservation cannot be found.",
+  });
+};
 
 const checkReservationForClosedDay = (req, res, next) => {
   const { data: { reservation_date } = {} } = req.body;
@@ -71,22 +193,19 @@ const checkReservationForClosedDay = (req, res, next) => {
       status: 400,
       message: "This restaurant is closed on Tuesdays. Please try again. "
     });
-  };
+  }
   next();
 };
 
 const checkReservationForPastDates = (req, res, next) => {
-  //const { data = {} } = req.body;
   const { data: { reservation_time, reservation_date } = {} } = req.body;
-  //const { reservation_date } = data;
   const newReservationDate = new Date(`${reservation_date} ${reservation_time}`);
   const currentDate = new Date();
   const currentTime = currentDate.toLocaleTimeString('en-US', { hour12: false });
-  const newReservationTime = newReservationDate.toLocaleTimeString('en-US', { hour12: false });
+  //const newReservationTime = newReservationDate.toLocaleTimeString('en-US', { hour12: false });
   const reservationDateToCompare = parseInt(reservation_date.replace(/-/g, '\/').split('/').join(''));
   let todaysDate = new Date();
   todaysDate = parseInt(todaysDate.toLocaleDateString('pt-br').split( '/' ).reverse().join(''));
-  //const currentTime = new Date()
   if (reservationDateToCompare === todaysDate && currentTime > newReservationDate.toLocaleTimeString('en-US', { hour12: false }) || reservationDateToCompare < todaysDate) {
     return next({
       status: 400,
@@ -124,39 +243,10 @@ const checkReservationTimeforAfterClosingHours = (req, res, next) => {
       next();
 }
 
-const checkReservationForPastTime = (req, res, next) => {
-  const { data: { reservation_time, reservation_date } = {} } = req.body;
-  const newReservationDate = new Date(`${reservation_date} ${reservation_time}`);
-  const newReservationDateHour = newReservationDate.getHours();
-  const newReservationDateMinutes = newReservationDate.getMinutes();
-  const currentDate = new Date();
-  const currentTime = currentDate.toLocaleTimeString('en-US', { hour12: false });
-  const newReservationTime = newReservationDate.toLocaleTimeString('en-US', { hour12: false });
-  let todaysDate = new Date();
-  const todaysDateHour = todaysDate.getHours();
-  const todaysDateMinutes = todaysDate.getMinutes();
-  
-  todaysDate = parseInt(todaysDate.toLocaleDateString('pt-br').split( '/' ).reverse().join(''));
-  let reservationDateToCompare = parseInt(reservation_date.replace(/-/g, '\/').split('/').join(''));
-  if (/*reservationDateToCompare >= todaysDate && newReservationDateHour > 21 && newReservationDateHour > 10 && currentTime > currentDate ||
-    reservationDateToCompare >= todaysDate && newReservationDateHour < 20 && newReservationDateHour > 10 && todaysDateMinutes > newReservationDateMinutes || 
-    reservationDateToCompare >= todaysDate && newReservationDateHour === 10 && newReservationDateMinutes < 30 && todaysDateMinutes > newReservationDateMinutes || 
-    reservationDateToCompare >= todaysDate && newReservationDateHour === 21 && newReservationDateMinutes < 30 && currentTime > currentDate*/
-    currentTime > newReservationTime
-  ) {
-    return next({
-      status: 400,
-      message: "Only future reservations are allowed.",
-    });
-  };
-  next()
-}
-
 
 // Route handlers
 const read = (req, res) => {
   const data = res.locals.reservation;
-  const a = req.query.mobile_number
    res.json({ data });
  };
 
@@ -169,7 +259,6 @@ const create = async(req, res) => {
   const data = await reservationsService.create(req.body.data);
   res.status(201).json({ data });
 };
-
 
 const update = async (req, res) => {
   const updatedReservation = {
@@ -186,7 +275,7 @@ module.exports = {
   readReservations: [asyncErrorBoundary(reservationsExist), read],
   readReservation: [asyncErrorBoundary(reservationExists), read],
   search: [asyncErrorBoundary(reservationsExist), read],
-  list: [ asyncErrorBoundary(list)],
+  list: [asyncErrorBoundary(list)],
   create: [hasRequiredProperties, checkReservationForClosedDay, checkReservationTimeforBeforeOpeningHours, checkReservationTimeforAfterClosingHours, checkReservationForPastDates, asyncErrorBoundary(create)],
-  update: [asyncErrorBoundary(reservationExists), asyncErrorBoundary(update)],
+  update: [asyncErrorBoundary(reservationExists), asyncErrorBoundary(updatedReservationHasValidProperties), asyncErrorBoundary(update)],
 };

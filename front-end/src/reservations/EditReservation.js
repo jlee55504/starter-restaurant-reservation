@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
-
 import ErrorAlert from "../layout/ErrorAlert";
 import { useHistory, useParams } from 'react-router-dom';
 import { updateReservation, readReservationForEdit } from '../utils/api';
 import { Button, Card } from "react-bootstrap";
 
 function EditReservation() {
-    //const [reservation, setReservation] = useState([]);
     const [error, setError] = useState(null);
     const [ firstName, setFirstName ] = useState("");
     const [ lastName, setLastName ] = useState("");
@@ -14,13 +12,13 @@ function EditReservation() {
     const [reservationDate, setReservationDate] = useState("");
     const [reservationTime, setReservationTime] = useState("");
     const [people, setPeople] = useState(1);
- 
     const [status, setStatus] = useState("");
     const [reservationCanBeEdited, setReservationCanBeEdited] = useState(true);
-
     const history = useHistory();
     const reservationId = useParams();
-    useEffect(loadReservation, [reservationId])
+
+    useEffect(loadReservation, [reservationId]);
+
     function loadReservation() {
         const abortController = new AbortController();
         setError(null);
@@ -45,21 +43,19 @@ function EditReservation() {
         }
             return reservation;
           })
-            //.then(setReservation)
             .catch(setError);
             return ()=> abortController.abort();
     }
 
     const handleChange = ({ target }) => {
-        if (target.name === "status") setStatus( target.value );
-        console.log(target.value)
+        if (target.name === "status") setStatus(target.value);
     }
 
-    const handleSubmit = event => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
         const abortController = new AbortController();
         const newReservationStatus = { status: status };
-        updateReservation(reservationId.reservation_id, newReservationStatus, abortController.signal)
+        await updateReservation(reservationId.reservation_id, newReservationStatus, abortController.signal)
            .catch(setError);
         history.goBack();
            return () => abortController.abort(); 
@@ -69,7 +65,8 @@ function EditReservation() {
     <main>
         <h1>Edit Reservation</h1>
         <ErrorAlert error={error}/> 
-            {reservationCanBeEdited ? <div>
+            {reservationCanBeEdited ? 
+            <div>
                 <Card>
                   <Card.Body>
                     <Card.Title>Reservation for:</Card.Title>

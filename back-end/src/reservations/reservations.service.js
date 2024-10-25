@@ -36,11 +36,29 @@ const search = mobile_number => {
     }
 
 const update = updatedReservation => {
+    if (updatedReservation.status === "finished"){
+        return knex.transaction((trx) => {
+            trx("seats")
+                    .select("reservation_id")
+                    .where({ "reservation_id": updatedReservation.reservation_id })
+                    .update("reservation_id", null)
+                    .then((updatedRecords) => updatedRecords[0])
+                .then(() => {
+                    return trx("reservations")
+                    .where({ "reservation_id": updatedReservation.reservation_id })
+                    .update(updatedReservation, "*")
+                    .then((updatedRecords) => updatedRecords[0])
+                })
+                .then(trx.commit)
+                .catch(trx.rollback);
+        })
+    }   else {
         return knex("reservations")
             .select("*")
             .where({ "reservation_id": updatedReservation.reservation_id })
             .update(updatedReservation, "*")
             .then((updatedRecords) => updatedRecords[0]);
+        }
 }
 
 
