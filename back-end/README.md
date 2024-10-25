@@ -17,7 +17,7 @@ The back-end of this project handles of of the API calls from the front-end. Thi
   * Nanoid
   * Jest and Supertest used for testing
 
-##src
+## src
 
 ### db
 
@@ -75,6 +75,7 @@ A 'service' for the tables resource. Retrieves the right data from the database.
 
 ### app.js
 Defines the Express application and connects routers.
+
 
 ### server.js
 Defines the node server.
