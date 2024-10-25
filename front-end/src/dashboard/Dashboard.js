@@ -150,13 +150,14 @@ useEffect(()=> {
   }
 
   return (
-    <main>
+    <main className="container-fluid m-0 p-0">
+      
       <h1>Dashboard</h1>
       <div className="d-md-flex mb-3">
         {date ? <h4 className="mb-0">Reservations for date: {date}</h4> : <h4 className="mb-0">Reservations for date: {queryParams}</h4>}
       </div>
       <ErrorAlert error={reservationsError} />
-      <div>
+      <div className="buttons-div mb-3">
           <Button className="btn btn-secondary" onClick={() => {
             history.push(`/dashboard?date=${previous(date)}`);
             }}>Previous day</Button>
@@ -167,7 +168,7 @@ useEffect(()=> {
             history.push(`/dashboard?date=${next(date)}`);
             }}>Next day</Button>
       </div>
-      <div className="row">
+      <div className="row d-md-flex">
       <div className="col-sm-8">
       <ReservationsList reservationsList={reservations} date={date} />
       </div>

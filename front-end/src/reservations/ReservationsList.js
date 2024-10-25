@@ -195,8 +195,8 @@ else {
         } else return;
       }
      
-      //{reservationCancelled ? <Dashboard date={query.get("date")} reservationCancelled={reservationCancelled} /> : null}
-//console.log(reservations)
+  
+
 /*<Button className="btn btn-secondary" type="button" onClick={() => history.push(`/reservations/${reservation.reservation_id}/edit`)}>Edit</Button>
             <td data-reservation-id-cancel={reservation.reservation_id}>
                 {reservation.status === "booked" ? 

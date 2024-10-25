@@ -83,7 +83,7 @@ function EditReservation() {
                         <option value={"finished"}>Finished</option>
                     </select>
                 </label>
-                <div>
+                <div className="buttons-div">
                   <Button type="button" className="btn btn-secondary"onClick={() => history.goBack()}>Cancel</Button> 
                   <Button type="submit" className="btn btn-primary" >Submit</Button>                   
                 </div>               
