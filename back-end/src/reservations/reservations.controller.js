@@ -22,8 +22,8 @@ const hasRequiredProperties = hasProperties(
     let reservation;
     if (!mobile_number && date && !req.params.reservation_id) reservation = await reservationsService.readReservations(date);
     else if (!date && mobile_number && !req.params.reservation_id) reservation = await reservationsService.search(mobile_number);
-    else if (!date && !mobile_number && !req.params.reservation_id) return next();
-    //else reservation = await reservationsService.list();
+    else if (!date && !mobile_number && !req.params.reservation_id) reservation = await reservationsService.list();//return next();
+     //reservation = await reservationsService.list();
     if (reservation) {
       // This code may need to be deleted to pass the tests
      /* if (mobile_number && reservation.length === 0) {
