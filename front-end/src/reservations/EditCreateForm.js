@@ -162,7 +162,7 @@ function EditCreateForm() {
                 people: Number(people),
             };      
         checkReservationForTimeAndDate(newReservation);
-         makeNewReservation(newReservation, abortController.signal)    
+         await makeNewReservation(newReservation, abortController.signal)    
         history.push(
             `/dashboard?date=${formatAsDate(newReservation.reservation_date)}`);
         setFirstName("");
