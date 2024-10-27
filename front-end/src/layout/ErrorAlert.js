@@ -13,7 +13,7 @@ function ErrorAlert({ error }) {
   return (
     error && (
       <div className="alert alert-danger m-2">Error: {
-        error.length > 1 ? error.map(error => error.message ) :
+        error.length > 1 ? error.map(error => <p key={JSON.stringify(error.id)}>{JSON.stringify(error.message)}</p> ) :
         error.message
         }</div>
     )

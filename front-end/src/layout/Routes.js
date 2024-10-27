@@ -10,6 +10,7 @@ import CreateNewTable from '../tables/CreateNewTable';
 import ReservationsSeat from "../reservations/ReservationsSeat";
 import SearchForReservation from "../searchForReservation/SearchForReservation";
 import EditReservation from "../reservations/EditReservation";
+import EditCreateForm from "../reservations/EditCreateForm";
 /**
  * Defines all the routes for the application.
  *
@@ -31,10 +32,10 @@ function Routes() {
             <ReservationsSeat />
         </Route>
       <Route path="/reservations/new">
-        <CreateNewReservation />
+        <EditCreateForm />
       </Route>
       <Route path="/reservations/:reservation_id/edit">
-        <EditReservation />
+        <EditCreateForm />
       </Route>
       <Route path="/dashboard/:reservationDate">
       <Dashboard date={query.get("date")} />

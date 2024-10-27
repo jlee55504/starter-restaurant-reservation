@@ -21,11 +21,6 @@ const create = reservation => {
 };
 
 const update = updatedTable => {
-    /*return knex("seats")
-        .select("*")
-        .where({ "table_id": updatedTable.table_id })
-        .update( updatedTable, "*")
-        .then((updatedRecords) => updatedRecords[0]);*/
         return knex.transaction((trx) => {
             trx("reservations")
                 .where({ "reservation_id": updatedTable.reservation_id })
@@ -43,10 +38,6 @@ const update = updatedTable => {
 }
 
 const destroy = (table) => {
-  /*  return knex("seats")
-        .select("reservation_id")
-        .where({ "reservation_id": table.reservation_id })
-        .del();*/
         return knex.transaction((trx) => {
             trx("reservations")
                 .where({ "reservation_id": table.reservation_id })

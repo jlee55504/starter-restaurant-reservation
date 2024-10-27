@@ -40,26 +40,15 @@ function ReservationSeats() {
     const loadReservationSeats = async () => {
         const abortController = new AbortController(); // Allows us to cancel the fetch if the component unmounts
         setError(null); // Resets any existing errors
-
-        // This code can be edited to only display the tables that can handle the reservation's number of people 
-        /* Fetches reservation details */
-        await readReservation(reservationId, abortController.signal)
-            .then(setReservation) // Updates the reservation state with fetched data
-            .then(() => listTables(abortController.signal)) // After fetching reservation, fetches tables
-            .then((tables) => {
-                const availableTables = [];
-                if (tables.length === 0) return [];
-                for (const table of tables) {
-                    //if (!table.reservation_id) availableTables.push(table);
-                };
-                 //return availableTables;
-                 return tables;
-            })
-            .then(setTables) // Updates the tables state with fetched data
-            .catch(setError); // Catches and sets any errors that occur during fetching
-
-        /* Cleanup function to abort fetch requests if the component unmounts */
-        return () => abortController.abort();
+        try {
+            const selectedReservation =  await readReservation(reservationId, abortController.signal);
+            setReservation(selectedReservation);
+            const tablesList = await listTables(abortController.signal);
+            setTables(tablesList);
+            return () => abortController.abort();
+        } catch (error) {
+            setError(error);
+        }
     };
 
     /**
@@ -89,35 +78,16 @@ function ReservationSeats() {
         }
 
         /* Finds the selected table object from the tables array */
-        const table = tables.find((t) => t.table_id === Number(selectedTable));
-
-        
+        const table = tables.find((t) => t.table_id === Number(selectedTable));     
 
         /* Prepares the data payload for the API request */
         const data = { reservation_id: reservation.reservation_id };
 
         try {
             /* Calls the assignTable API function to assign the reservation to the selected table */
-            await assignTable(selectedTable, data, abortController.signal)
-               // .catch(setError)
-            //.then(() => history.push("/dashboard"))
-            /* Validation: Check if the selected table exists */
-            /*if (!table) {
-                setError({ message: "Selected table does not exist." });
-                return;
-            }
-    
-            /* Validation: Check if the table is already occupied */
-           /* if (table.reservation_id) {
-                setError({ message: "This table is already occupied." });
-                return;
-            }*/
-    
-            /* Validation: Check if table capacity is sufficient for the reservation's party size */
-           /* if (table.capacity < reservation.people) {
-                setError({ message: "Table capacity is insufficient for the reservation." });
-                return;
-            } */
+            const newReservationStatus = { status: "seated" };
+            await updateReservation(reservation.reservation_id, newReservationStatus, abortController.signal);
+            await assignTable(selectedTable, data, abortController.signal);
             /* Navigates to the /dashboard page upon successful assignment */
              history.push("/dashboard");
              return () => abortController.abort()
@@ -166,14 +136,7 @@ function ReservationSeats() {
                     <Button
                         type="button"
                         className="btn btn-secondary"
-                        onClick={async () => {
-                            const abortController = new AbortController();
-                            const newReservationStatus = {status: "booked"};
-                            await updateReservation(reservationId, newReservationStatus, abortController.signal)
-                                .catch(setError);
-                            history.goBack();
-                        }
-                    }
+                        onClick={async () => history.goBack()}
                     >
                         Cancel
                     </Button>

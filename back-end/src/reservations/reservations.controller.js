@@ -20,11 +20,12 @@ const hasRequiredProperties = hasProperties(
   const reservationsExist = async (req, res, next) => {
     const { date, mobile_number } = req.query;
     let reservation;
+  
     if (!mobile_number && date && !req.params.reservation_id) reservation = await reservationsService.readReservations(date);
     else if (!date && mobile_number && !req.params.reservation_id) reservation = await reservationsService.search(mobile_number);
-    else if (!date && !mobile_number && !req.params.reservation_id) reservation = await reservationsService.list();//return next();
-     //reservation = await reservationsService.list();
+    else if (!date && !mobile_number && !req.params.reservation_id) reservation = await reservationsService.list();
     if (reservation) {
+
       // This code may need to be deleted to pass the tests
      /* if (mobile_number && reservation.length === 0) {
           return next({
@@ -42,10 +43,10 @@ const hasRequiredProperties = hasProperties(
   };
 
   const reservationExists = async (req, res, next) => {
-    const { reservation_id } = req.params;
-    const reservation = await reservationsService.readReservation(reservation_id);
-   if (reservation) {
-     res.locals.reservation = reservation;
+    const { reservation_id } = req.params;  
+    const reservationExists = await reservationsService.readReservation(reservation_id);
+    if (reservationExists) {
+     res.locals.reservation = reservationExists;
      return next();
    };
    next({
@@ -66,124 +67,6 @@ const updatedReservationHasValidProperties = async (req, res, next) => {
     message: "Reservation cannot be found.",
   });
 }
-
-const checkUpdatedReservationTimeforBeforeOpeningHours = async (req, res, next) => {
-  const { reservation_id } = req.params;
-  const reservation = await reservationsService.readReservation(reservation_id);
-        if (reservation) {
-          const updatedReservationDate = reservation.reservation_date.toString();
-          const updatedReservationTime = reservation.reservation_time.toString();
-          const newReservationDate = new Date(`${updatedReservationDate} ${updatedReservationTime}`);
-          const newReservationDateHour = newReservationDate.getHours();
-          const newReservationDateMinutes = newReservationDate.getMinutes();
-          if (newReservationDateHour < 10 || newReservationDateHour === 10 && newReservationDateMinutes < 30) {
-          return next({
-            status: 400,
-            message: "This restaurant is closed before before 10:30 AM. Please try again. ",
-          });
-        }  else {
-          res.locals.reservation = reservation;
-          return next();
-       }
-      }
-      next({
-        status: 404,
-        message: "Reservation cannot be found.",
-    });
-}
-const checkUpdatedReservationTimeforAfterClosingHours = async (req, res, next) => {
-  const { reservation_id } = req.params;
-  const reservation = await reservationsService.readReservation(reservation_id);
-        if (reservation) {
-          const updatedReservationDate = reservation.reservation_date.toString();
-          const updatedReservationTime = reservation.reservation_time.toString();
-          const newReservationDate = new Date(`${updatedReservationDate} ${updatedReservationTime}`);
-          const newReservationDateHour = newReservationDate.getHours();
-          const newReservationDateMinutes = newReservationDate.getMinutes();
-          if (newReservationDateHour > 21 || newReservationDateHour === 21 && newReservationDateMinutes > 30) {
-          return next({
-            status: 400,
-            message: "It's too late today to book that reservation. Please try again. ",
-          });
-        }  else {
-          res.locals.reservation = reservation;
-          return next();
-       }
-      }
-      next({
-        status: 404,
-        message: "Reservation cannot be found.",
-    });
-}
-
-const checkUpdatedReservationForPastDates = async (req, res, next) => {
-  const { reservation_id } = req.params;
-  const reservation = await reservationsService.readReservation(reservation_id);
-  const currentDate = new Date();
-  const currentTime = currentDate.toLocaleTimeString('en-US', { hour12: false });
- // const newReservationTime = newReservationDate.toLocaleTimeString('en-US', { hour12: false });
-  let todaysDate = new Date();
-  todaysDate = parseInt(todaysDate.toLocaleDateString('pt-br').split( '/' ).reverse().join(''));
-  if (reservation) {
-    const updatedReservationDate = reservation.reservation_date.toString();
-    const updatedReservationTime = reservation.reservation_time.toString();
-    const newReservationDate = new Date(`${updatedReservationDate} ${updatedReservationTime}`);
-    const reservationDateToCompare = parseInt(updatedReservationDate.replace(/-/g, '\/').split('/').join(''));
-  if (reservationDateToCompare === todaysDate && currentTime > newReservationDate.toLocaleTimeString('en-US', { hour12: false }) || reservationDateToCompare < todaysDate) {
-    return next({
-      status: 400,
-      message: `Only future reservations are allowed.`,
-    });
-  }  else {
-    res.locals.reservation = reservation;
-    return next();
- }
-} next({
-    status: 404,
-    message: "Reservation cannot be found.",
-});  
-}
-
-const checkUpdatedReservationForClosedDay = async (req, res, next) => {
-  const { reservation_id } = req.params;
-  const reservation = await reservationsService.readReservation(reservation_id);
-  if (reservation) {
-    const updatedReservationDate = reservation.reservation_date.toString();
-    const updatedReservationDateDay = new Date(updatedReservationDate.replace(/-/g, '\/'));
-    if (!updatedReservationDateDay.getDay() === 2) { 
-      return next({
-        status: 400,
-        message: "This restaurant is closed on Tuesdays. Please try again. "
-      });
-  } else {
-      res.locals.reservation = reservation;
-      return next();
-   }
-}
-  next({
-    status: 404,
-    message: "Reservation cannot be found.",
-  })
-};
-
-const checkUpdatedReservationForValidInput = async (req, res, next) => {
-  const { reservation_id } = req.params;
-    const reservation = await reservationsService.readReservation(reservation_id);
-  if (reservation){
-    if (reservation.status !== "booked") {
-     return next({
-       status: 400,
-       message: "Only reservations with a status of 'booked' can be edited."
-     });
-   } else {
-      res.locals.reservation = reservation;
-      return next();
-   }
-  }next({
-    status: 404,
-    message: "Reservation cannot be found.",
-  });
-};
 
 const checkReservationForClosedDay = (req, res, next) => {
   const { data: { reservation_date } = {} } = req.body;
@@ -237,7 +120,7 @@ const checkReservationTimeforAfterClosingHours = (req, res, next) => {
         if (newReservationDateHour > 21 || newReservationDateHour === 21 && newReservationDateMinutes > 30) {
           return next({
             status: 400,
-            message: "It's too late today to book that reservation. Please try again.  ",
+            message: "It's too late today to book that reservation. Please try again. ",
           });
         };
       next();
@@ -270,6 +153,15 @@ const update = async (req, res) => {
   res.json({ data });
 }
 
+const updateEditedreservation = async (req, res) => {
+  const {data = {}} = req.body;
+  const updatedReservation = {
+    ...data,
+    reservation_id: data.reservation_id,
+  }
+  const updatedData = await reservationsService.update(updatedReservation);
+  res.json({ updatedData });
+}
 
 module.exports = {
   readReservations: [asyncErrorBoundary(reservationsExist), read],
@@ -278,4 +170,5 @@ module.exports = {
   list: [asyncErrorBoundary(list)],
   create: [hasRequiredProperties, checkReservationForClosedDay, checkReservationTimeforBeforeOpeningHours, checkReservationTimeforAfterClosingHours, checkReservationForPastDates, asyncErrorBoundary(create)],
   update: [asyncErrorBoundary(reservationExists), asyncErrorBoundary(updatedReservationHasValidProperties), asyncErrorBoundary(update)],
+  updateEditedreservation: [asyncErrorBoundary(reservationExists), hasRequiredProperties, checkReservationForClosedDay, checkReservationTimeforBeforeOpeningHours, checkReservationTimeforAfterClosingHours, checkReservationForPastDates, asyncErrorBoundary(updateEditedreservation)],
 };

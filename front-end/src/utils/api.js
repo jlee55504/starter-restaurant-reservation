@@ -39,22 +39,22 @@ async function fetchJson(url, options, onCancel) {
 
     if (response.status === 204) {
       return null;
-    }
+    };
 
     const payload = await response.json();
-    console.log(payload)
+  //  console.log(payload)
     if (payload.error) {
       return Promise.reject({ message: payload.error });
-    }
+    };
     return payload.data;
   } catch (error) {
     if (error.name !== "AbortError") {
       console.error(error.stack);
       throw error;
-    }
+    };
     return Promise.resolve(onCancel);
-  }
-}
+  };
+};
 
 /**
  * Retrieves all existing reservation.
@@ -81,7 +81,7 @@ export const listTables = async (signal) => {
     signal,
   };
   return await fetchJson(url, options, []);
-}
+};
 
 export const readReservations = async(reservation_dates, signal) => {
   const options = {
@@ -89,6 +89,7 @@ export const readReservations = async(reservation_dates, signal) => {
     headers,
     signal,
   };
+  if (Array.isArray(reservation_dates) && reservation_dates.length === 0) return [];
   if (!Array.isArray(reservation_dates)) {
    const url = new URL(`${API_BASE_URL}/reservations?date=${(reservation_dates)}`);
     return await fetchJson(url, options)
@@ -101,11 +102,11 @@ export const readReservations = async(reservation_dates, signal) => {
   for (const reservation_date of reservation_dates) {
      url = new URL(`${API_BASE_URL}/reservations?date=${(reservation_date)}`);
      reservations = await fetchJson(url, options)
-      .then(formatReservationDate)
-      .then(formatReservationTime);
+       .then(formatReservationDate)
+       .then(formatReservationTime);
   };
   return Promise.all(reservations);
-}
+};
 };
 
 export const readReservation = async (reservation_id, signal) => {
@@ -118,10 +119,9 @@ export const readReservation = async (reservation_id, signal) => {
   return await fetchJson(url, options)
     .then(formatReservationDate)
     .then(formatReservationTime);
-}
+};
 
 export const findReservationsById = async (reservation_ids, signal) => {
-  console.log(reservation_ids)
   const options = {
     method: "GET",
     headers,
@@ -134,16 +134,15 @@ export const findReservationsById = async (reservation_ids, signal) => {
       .then(formatReservationTime);
    }
    else { 
-    let reservations = reservation_ids.map(async(reservation) => {
+    let reservations = reservation_ids.map(async (reservation) => {
       const  url = new URL(`${API_BASE_URL}/reservations/${reservation}`);
        return reservations = await fetchJson(url, options)
         .then(formatReservationDate)
         .then(formatReservationTime);
     });
-
     return Promise.all(reservations);
-  }
-}
+  };
+};
 
 export async function makeNewReservation (reservation, signal) {
   const url = new URL(`${API_BASE_URL}/reservations`);
@@ -166,17 +165,7 @@ export const makeNewTable = async (table, signal) => {
     signal,
   };
   return await fetchJson(url, options);
-}
-
-export const readTable = async (table_id, signal) => {
-  const url = new URL(`/tables/:table_id/seat/`);
-  const options = {
-    method: "GET",
-    headers,
-    signal,
-  };
-  return await fetchJson(url, options);
-}
+};
 
 export const assignTable = async (table, data, signal) => {
   const url = new URL(`${API_BASE_URL}/tables/${table}/seat`);
@@ -185,10 +174,9 @@ export const assignTable = async (table, data, signal) => {
     headers,
     body: JSON.stringify({ data: data }),
     signal,
-  };
-  
+  };  
   return await fetchJson(url, options, []);
-}
+};
 
 export const deleteTableAssignment = async (table, reservationStatus, signal) => {
   const url = new URL(`${API_BASE_URL}/tables/${table.table_id}/seat`);
@@ -199,7 +187,7 @@ export const deleteTableAssignment = async (table, reservationStatus, signal) =>
     signal,
   };
   return await fetchJson(url, options, [])
-  }
+  };
  
   export const updateReservation = async (reservation_id, reservationStatus, signal) => {
     const url = new URL(`${API_BASE_URL}/reservations/${reservation_id}/status`);
@@ -209,9 +197,22 @@ export const deleteTableAssignment = async (table, reservationStatus, signal) =>
       body: JSON.stringify({ data: reservationStatus }),
       signal,
     };
-    return await fetchJson(url, options, [])
-      //.then(formatReservationDate)
+    return await fetchJson(url, options)
+     // .then(formatReservationDate)
       //.then(formatReservationTime);
+  };
+
+  export const updateEditedReservation = async (reservation, signal) => {
+    const url = new URL(`${API_BASE_URL}/reservations/${reservation.reservation_id}`);
+    const options = {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({ data: reservation }),
+      signal,
+    };
+    return await fetchJson(url, options);
+     // .then(formatReservationDate)
+     // .then(formatReservationTime);
   };
 
 export const searchForReservation = async (mobile_number, signal) => {
@@ -222,9 +223,9 @@ export const searchForReservation = async (mobile_number, signal) => {
     signal,
     };
     return await fetchJson(url, options)
-    .then(formatReservationDate)
-    .then(formatReservationTime);
-}
+      .then(formatReservationDate)
+      .then(formatReservationTime);
+};
 
 
 export const readReservationForEdit = async (reservation_id, signal) => {
@@ -237,8 +238,25 @@ export const readReservationForEdit = async (reservation_id, signal) => {
   return await fetchJson(url, options)
     .then(formatReservationDate)
     .then(formatReservationTime); 
-  }   
+  };   
 
-/*export cancelReservation = async (reservation_id, reservationStatus, signal) => {
-
-  } */
+export const setReservationDateAndTime = reservations => {
+    for (const reservation of reservations) {
+        const newReservationDate = new Date(`${reservation.reservation_date} ${reservation.reservation_time}`);
+        const month = newReservationDate.getMonth() + 1;
+        const day = newReservationDate.getDate();    
+        reservation.reservation_date = `${month}-${day}-${newReservationDate.getFullYear()}`;
+        let minutes = newReservationDate.getMinutes();
+        let hours = newReservationDate.getHours();
+        let aMPm = "A.M.";
+        if (minutes < 10) {
+            minutes = `0${minutes}`
+        }
+        if (hours > 12) {
+            hours -= 12;
+            aMPm = "P.M."
+        }
+        reservation.reservation_time = `${hours}:${minutes} ${aMPm}`;
+        }
+        return reservations;
+}

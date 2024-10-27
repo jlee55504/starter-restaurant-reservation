@@ -18,12 +18,14 @@ function Dashboard({ date }) {
   const search = useLocation().search;
   const queryParams = new URLSearchParams(search).get("date");
   const tableQuery = new URLSearchParams(search).get("tables");
+  const reservationCancelled = new URLSearchParams(search).get("reservationCancelled");
   const [reservations, setReservations] = useState([]);
   const [reservationsError, setReservationsError] = useState(null);
   const [tables, setTables] = useState([]);
   const [tableHasBeenDeleted, setTableHasBeenDeleted] = useState(false);
   const [updateTables, setUpdateTables] = useState(false);
   const [tableToDelete, setTableToDelete] = useState({});
+  const [updateReservations, setUpdateReservations] = useState(false);
 
   // Notifies the application that a table has been deleted
   useEffect(() => {
@@ -33,27 +35,40 @@ function Dashboard({ date }) {
       setUpdateTables(true);
     }
   }, [tableHasBeenDeleted]);
-useEffect(()=> {
-  if (tableQuery !== "true") return;
+
+// Tells browser to reload the reservations and tables when a reservation has been cancelled 
+useEffect(()=> { 
+  if (reservationCancelled !== "true") return;
    else {
-      loadDashboard();
+    setUpdateReservations(true);
+    if (!queryParams) history.push(`/dashboard?date=${date}`)
+      else history.push(`/dashboard?date=${queryParams}`)
    }
-}, [tableQuery])
+}, [reservationCancelled]);
+
+// Reloads the reservations and tables
+useEffect(() => {
+  if (!updateReservations) return;
+  else loadDashboard();
+}, [updateReservations]);
 
   // Deletes the assignment to the seleted table
   useEffect(async () => {
     const abortController = new AbortController();
     if (!updateTables) return;
     else {
-      const reservationStatus = { status: "finished" }
-      await deleteTableAssignment(tableToDelete, reservationStatus, abortController.signal)
-        .then(() => setTableToDelete({}))
-        .catch(setReservationsError);  
-      return ()=> abortController.abort();
+      try {
+        const reservationStatus = { status: "finished" }
+        await deleteTableAssignment(tableToDelete, reservationStatus, abortController.signal);
+        setTableToDelete({});
+        return ()=> abortController.abort();
+      } catch (error) {
+        setReservationsError(error);
+      };
     }
     }, [updateTables]);
 
-  // Reloads the tables
+  // Reloads the tables and reservations
     useEffect(()=> {
       if (!updateTables) return;
           loadDashboard();
@@ -61,82 +76,144 @@ useEffect(()=> {
 
   useEffect(loadDashboard, [date]);
 
-  function loadDashboard() {
+  async function loadDashboard() {
+    setUpdateReservations(false);
     const abortController = new AbortController();
    setReservationsError(null);
     if (!queryParams) {
-      listReservations({ date }, abortController.signal)
-      .then((reservations) => {
-          let todaysReservations;
-          if (reservations.length > 0) { 
-            todaysReservations = reservations.filter(reservation => reservation.reservation_date === date)
+      try {
+        const reservationList = await listReservations({ date }, abortController.signal);
+        if (reservationList.length === 0) {
+          setReservations([]);
+          const currentTables = await listTables(abortController.signal);
+                if (currentTables.length === 0) {
+                  setTables([]);
+                  return ()=> abortController.abort();
+                }
+                 setTables(currentTables);
+          return ()=> abortController.abort();
+        };
+        if (reservationList.length === 1) {
+          const singleReservation = await readReservations(date, abortController.signal);
+          const filteredReservation = singleReservation.filter(reservation => reservation.status !== "cancelled" && reservation.status !== "finished")
+            if (filteredReservation.length === 0)  {
+              setReservations([]);
+              const currentTables = await listTables(abortController.signal);
+                if (currentTables.length === 0) {
+                  setTables([]);
+                  return ()=> abortController.abort();
+                }
+                setTables(currentTables);
+              return ()=> abortController.abort();
+            }
+          const currentTables = await listTables(abortController.signal);
+                if (currentTables.length === 0) {
+                  setTables([]);
+                  return ()=> abortController.abort();
+                }
+                setTables(currentTables);
+          return ()=> abortController.abort();
+        };
+        const filteredReservations = reservationList.filter(reservation => reservation.reservation_date === date && reservation.status !== "finished" && reservation.status !== "cancelled")
             .map(reservation => { 
               if (reservation.reservation_date === date) { 
                 return reservation.reservation_date;
               };
               return reservation;
-            }) 
-          }; 
-           if (reservations.length === 0 || todaysReservations.length === 0) {
-              return [];
+            });
+            if (filteredReservations.length === 0) {
+              setReservations([]);
+              const currentTables = await listTables(abortController.signal);
+                if (currentTables.length === 0) {
+                  setTables([]);
+                  return ()=> abortController.abort();
+                }
+                setTables(currentTables);
+              return ()=> abortController.abort();
             } else {
-              return readReservations(todaysReservations, abortController.signal)
-              };
-      })
-      .then((reservations) => {
-        if (reservations.length > 0) {
-          reservations = reservations.filter(reservation => reservation.status !== "finished");
-        return reservations;
-      } else return [];
-      })
-      .then(setReservations)
-      .then(() => {
-        const currentTables = listTables(abortController.signal);
-        if (currentTables.length === 0) return [];
-        else return currentTables;
-      })
-      .then(setTables)
-      .catch(setReservationsError);
-      return () => abortController.abort(); 
+                const currentReservations = await readReservations(filteredReservations, abortController.signal);
+                const refilteredReservationsList = currentReservations.filter(reservation => reservation.status !== "cancelled" && reservation.status !== "finished");
+                setReservations(refilteredReservationsList);
+                const currentTables = await listTables(abortController.signal);
+                if (currentTables.length === 0) {
+                  setTables([]);
+                  return ()=> abortController.abort();
+                }
+                setTables(currentTables);
+                return ()=> abortController.abort();
+            }
+      } catch (error) {
+        setReservationsError(error)
+      }
     }
-      else if (queryParams) {
-        listReservations({ date }, abortController.signal)
-      .then((reservations) => {
-          let reservationsWithDates;
-          if (reservations.length > 0) { 
-            reservationsWithDates = reservations.filter(reservation => reservation.reservation_date === queryParams && reservation.status !== "finished")
-            .map(reservation => { 
+      else {
+        try {
+          const reservationList = await listReservations({ date }, abortController.signal);
+          if (reservationList.length === 0) {
+            setReservations([]);
+            const currentTables = await listTables(abortController.signal);
+                  if (currentTables.length === 0) {
+                    setTables([]);
+                    return ()=> abortController.abort();
+                  }
+                   setTables(currentTables);
+            return ()=> abortController.abort();
+          };
+           if (reservationList.length === 1) {
+            const singleReservation = await readReservations(queryParams, abortController.signal);
+            const filteredReservation = singleReservation.filter(reservation => reservation.status !== "cancelled" && reservation.status !== "finished")
+            if (filteredReservation.length === 0)  {
+              setReservations([]);
+              const currentTables = await listTables(abortController.signal);
+                if (currentTables.length === 0) {
+                  setTables([]);
+                  return ()=> abortController.abort();
+                }
+                setTables(currentTables);
+              return ()=> abortController.abort();
+            }
+            setReservations(singleReservation);
+            const currentTables = await listTables(abortController.signal);
+                if (currentTables.length === 0) {
+                  setTables([]);
+                  return ()=> abortController.abort();
+                }
+                setTables(currentTables);
+            return ()=> abortController.abort();
+          }
+        else {
+          const filteredReservations = reservationList.filter(reservation => reservation.reservation_date === queryParams && reservation.status !== "finished")
+          .map(reservation => { 
               if (reservation.reservation_date === queryParams) { 
                 return reservation.reservation_date;
               };
               return reservation;
             });
-          }; if (reservations.length === 0 || reservationsWithDates.length === 0) {
-              return [];
+            if (filteredReservations.length === 0) {
+              setReservations([]);
+              const currentTables = await listTables(abortController.signal);
+                if (currentTables.length === 0) {
+                  setTables([]);
+                  return ()=> abortController.abort();
+                }
+                setTables(currentTables);
+              return ()=> abortController.abort();
             } else {
-              return readReservations(reservationsWithDates, abortController.signal);
-              };
-      })
-      .then((reservations) => {
-        if (reservations.length > 0) {
-          reservations = reservations.filter(reservation => reservation.status !== "finished");
-        return reservations;
-      } else return [];
-      })
-      .then(setReservations)
-      .then(() => {
-        const currentTables = listTables(abortController.signal);
-        if (currentTables.length === 0) return [];
-        else return currentTables;
-      })
-      .then((tables) => {
-        return tables;
-      })
-      .then(setTables)
-      .catch(setReservationsError);
-      return () => abortController.abort();
+                const currentReservations = await readReservations(filteredReservations, abortController.signal);
+                const refilteredReservationsList =  currentReservations.filter(reservation => reservation.status !== "cancelled" && reservation.status !== "finished");
+                setReservations(refilteredReservationsList);
+                const currentTables = await listTables(abortController.signal);
+                if (currentTables.length === 0) {
+                  setTables([]);
+                  return ()=> abortController.abort();
+                }
+                setTables(currentTables);
+                return ()=> abortController.abort();
+            }}
+        } catch (error) {
+          setReservationsError(error);
+        }
       }
-      
   };
 
   function handleDeleteTableAssignment(table) {
@@ -151,7 +228,6 @@ useEffect(()=> {
 
   return (
     <main className="container-fluid m-0 p-0">
-      
       <h1>Dashboard</h1>
       <div className="d-md-flex mb-3">
         {date ? <h4 className="mb-0">Reservations for date: {date}</h4> : <h4 className="mb-0">Reservations for date: {queryParams}</h4>}
@@ -173,14 +249,14 @@ useEffect(()=> {
       <ReservationsList reservationsList={reservations} date={date} />
       </div>
       <div className="col-sm-4">
-      {tables.length > 0 ? tables.map((table, index) => {
+      {tables.length > 0 ? tables.map((table) => {
         let isTableFree = "";
         if (table.reservation_id) {
           isTableFree = "Occupied";
         } else {
           isTableFree = "Free";
         }
-          return <Card key={index}>
+          return <Card key={table.table_id}>
             <Card.Body>
               <Card.Title>Table:</Card.Title>
               <Card.Subtitle>{table.table_name}</Card.Subtitle>
@@ -193,8 +269,6 @@ useEffect(()=> {
       </div>
         <div/>
       </div>
-      
-
     </main>
   );
 }

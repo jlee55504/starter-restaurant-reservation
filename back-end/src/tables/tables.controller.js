@@ -2,9 +2,9 @@ const asyncErrorBoundary = require("../errors/asyncErrorBoundary");
 const seatsService = require("./tables.service");
 const hasProperties = require("../errors/hasProperties");
 const { Resolver } = require("webpack");
-const hasRequiredProperties = hasProperties("table_name", "capacity", "reservation_id");
-//import { readReservation } from "../reservations/reservations.controller";
-//const updatedTableHasRequiredProperties = hasProperties("reservation_id")
+const hasRequiredProperties = hasProperties("table_name", "capacity");
+//const updatedTableHasRequiredProperties = hasProperties("reservation_id");
+
 // Middleware functions
 const seatExists = async (req, res, next) => {
     const tableExists = await seatsService.read(req.params.table_id);

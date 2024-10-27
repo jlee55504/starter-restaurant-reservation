@@ -1,35 +1,86 @@
-/* Imports 'React', the 'useState' and 'useEffect' 'components' from 'react'. */
-import React, { useState } from "react";
-/* Imports the 'Routes', 'Route', 'useNavigate', and the 'useLocation' 
-'components' from 'react-router-dom'. */
-import {  useHistory } from "react-router-dom";
-import { Button } from "react-bootstrap";
-import './Reservations.css';
+import React, { useEffect, useState } from "react";
 import ErrorAlert from "../layout/ErrorAlert";
-import { makeNewReservation }from '../utils/api';
+import { useHistory, useParams } from 'react-router-dom';
+import { updateEditedReservation, readReservationForEdit, makeNewReservation } from '../utils/api';
+import { Button } from "react-bootstrap";
 import { formatAsDate } from "../utils/date-time";
-  
-
-function CreateNewReservation() {
+function EditCreateForm() {
     const history = useHistory();
+    const [error, setError] = useState(null);
     const [ firstName, setFirstName ] = useState("");
     const [ lastName, setLastName ] = useState("");
     const [mobileNumber, setMobileNumber] = useState("");
     const [reservationDate, setReservationDate] = useState("");
-    const [error, setError] = useState(null);
     const [reservationTime, setReservationTime] = useState("");
     const [people, setPeople] = useState(1);
+    const [status, setStatus] = useState("");
+    const [reservationCanBeEdited, setReservationCanBeEdited] = useState(true);
     const [apiErrors, setApiErrors] = useState(null);
+    const [reservationId, setReserevationId] = useState(0);
+    const [editReservationPath, setEditReservationPath] = useState(false)
+    const editedReservationId = useParams();
+    const editedReservationPath = window.location.pathname;
+    const [editedReservation, setEditedReservation] = useState({});
     let errorsArray = [];
     let errorCount = 1;
+    useEffect(() => {
+        if (!editedReservationPath.includes("edit")) { 
+            setEditedReservation({});
+            setFirstName("");
+            setLastName("");
+            setMobileNumber("");
+            setReservationDate("");
+            setReservationTime("");
+            setPeople(1);
+            setEditReservationPath(false);
+            setError(null);
+            setApiErrors(null);
+            return;
+        }
+        else {
+            setEditReservationPath(true);
+            loadReservation();
+        }
+    }, [editedReservationPath]);
+
+    async function loadReservation() {
+        const abortController = new AbortController();
+        setError(null);
+        setApiErrors(null);
+        try {
+            const reservationForEditing = await readReservationForEdit(editedReservationId.reservation_id, abortController.signal);
+            if (reservationForEditing.length === 0) {
+                return ()=> abortController.abort();
+            }
+            else {
+                if (reservationForEditing.status !== "booked")  setReservationCanBeEdited(false);
+                else {
+                    setReserevationId(reservationForEditing.reservation_id)
+                    setFirstName(reservationForEditing.first_name);
+                    setLastName(reservationForEditing.last_name);
+                    setMobileNumber(reservationForEditing.mobile_number);
+                    setReservationDate(reservationForEditing.reservation_date);
+                    setReservationTime(reservationForEditing.reservation_time);
+                    setPeople(reservationForEditing.people);
+                    setStatus(reservationForEditing.status);
+                    setEditedReservation(reservationForEditing);
+                    return reservationForEditing;
+                }
+                return ()=> abortController.abort();
+            }
+        } catch (error) {
+            setError(error);
+        }
+    }
     const handleChange = ({ target }) => {
+        if (target.name === "status") setStatus(target.value);
         if (target.name === "first_name") setFirstName( target.value );
         if (target.name === "last_name") setLastName(target.value);
         if (target.name === "mobile_number") setMobileNumber(target.value);
         if (target.name === "reservation_date") setReservationDate(target.value);
         if (target.name === "reservation_time") setReservationTime(target.value);
         if (target.name === "people") setPeople(target.value);
-    }
+    }    
 
     const checkReservationForTimeAndDate = reservation => {
         const currentTime = new Date();
@@ -40,7 +91,6 @@ function CreateNewReservation() {
         let todaysDate = new Date();
         todaysDate = Number(todaysDate.toISOString().slice(0,10).replace(/-/g,""));
          todaysDate = todaysDate -1;
-        console.log(currentTime.toLocaleTimeString('en-US', { hour12: false }) > newReservationDate.toLocaleTimeString('en-US', { hour12: false }))
         if (newReservationDate.getDay() === 2) {
           errorsArray.push({
             id:errorCount,
@@ -74,44 +124,72 @@ function CreateNewReservation() {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
+        errorCount = 1;
+        setError(null);
+        setApiErrors(null);
+        errorsArray = []; 
         const abortController = new AbortController();
-        const newReservation = {
-            first_name: firstName,
-            last_name: lastName,
-            mobile_number: mobileNumber,
-            reservation_date: reservationDate,
-            reservation_time: reservationTime,
-            people: Number(people),
-        };
-        try {
-            const newReservation = {
+        
+        if (editReservationPath) {
+            try {
+                const updatedReservation = {
+                    reservation_id: reservationId,
+                    first_name: firstName,
+                    last_name: lastName,
+                    mobile_number: mobileNumber,
+                    reservation_date: reservationDate,
+                    reservation_time: reservationTime,
+                    people: Number(people),
+                }
+                checkReservationForTimeAndDate(updatedReservation)
+                await updateEditedReservation(updatedReservation, abortController.signal);
+                setEditedReservation({});
+                history.goBack();
+                return () => abortController.abort(); 
+            } catch (error) {
+                setReservationDate(editedReservation.reservation_date);
+                setReservationTime(editedReservation.reservation_time);
+                setApiErrors(error);
+            }
+        } else {
+            try {
+                const newReservation = {
                 first_name: firstName,
                 last_name: lastName,
                 mobile_number: mobileNumber,
                 reservation_date: reservationDate,
                 reservation_time: reservationTime,
                 people: Number(people),
-            };
-            checkReservationForTimeAndDate(newReservation);
-            makeNewReservation(newReservation, abortController.signal)    
-           history.push(
-               `/dashboard?date=${formatAsDate(newReservation.reservation_date)}`);
-           setFirstName("");
-           setLastName("");
-           setMobileNumber("");
-           setReservationDate("");
-           setReservationTime("");
-           setPeople(1);
-          return ()=> abortController.abort();
+            };      
+        checkReservationForTimeAndDate(newReservation);
+         makeNewReservation(newReservation, abortController.signal)    
+        history.push(
+            `/dashboard?date=${formatAsDate(newReservation.reservation_date)}`);
+        setFirstName("");
+        setLastName("");
+        setMobileNumber("");
+        setReservationDate("");
+        setReservationTime("");
+        setPeople(1);
+        return ()=> abortController.abort();
         } catch (error) {
-            setError(error)
+            //setFirstName("");
+            //setLastName("");
+            //setMobileNumber("");
+            setReservationDate("");
+            setReservationTime("");
+            //setPeople(1);
+            setApiErrors(error);
         }
+    } 
     }
+
     return (
-      <main>
-            <h1>New Reservation</h1>
+        <main>
+            {editReservationPath ? <h1>Edit Reservation</h1> : <h1>New Reservation</h1>}
             <ErrorAlert error={error} />
-            <form onSubmit={handleSubmit}>
+            <div>
+               <form onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="first_name">
                     <input type="text" name="first_name" id="first_name" placeholder="First Name" value={ firstName } onChange={ handleChange } maxLength={ 50 } required></input>
@@ -142,9 +220,9 @@ function CreateNewReservation() {
                   <Button type="button" className="btn btn-secondary"onClick={() => history.goBack()}>Cancel</Button> 
                   <Button type="submit" className="btn btn-primary" >Submit</Button>                   
                 </div>
-            </form>
-      </main>
-    );
-};
-
-export default CreateNewReservation;
+            </form>     
+            </div> 
+        </main>
+    )
+}
+export default EditCreateForm;

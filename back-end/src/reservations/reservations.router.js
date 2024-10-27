@@ -13,10 +13,12 @@ router.route("/")
    .get(controller.readReservations)
     .get(controller.list)
     .post(controller.create)
+    .put(controller.updateEditedreservation)
     .all(methodNotAllowed);
 
 router.route("/:reservation_id")
     .get(controller.readReservation)
+    .put(controller.updateEditedreservation)
     .all(methodNotAllowed);
    
 router.route("/:reservation_id/seat")

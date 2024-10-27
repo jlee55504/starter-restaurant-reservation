@@ -18,35 +18,43 @@ function CreateNewTable () {
         if (target.name === "capacity") setCapacity(target.value);
     }
 
-    const handleSubmit = event => {
+    
+    const handleSubmit = async (event) => {
         event.preventDefault();
         const abortController = new AbortController();
         const newTable = {
             table_name: tableName,
             capacity: Number(capacity),
         };
-        makeNewTable(newTable, abortController.signal)
-        .then(() => {
+        try {
+            const newTable = {
+                table_name: tableName,
+                capacity: Number(capacity),
+            };
+            await makeNewTable(newTable, abortController.signal);
             history.push("/dashboard");
-        }).catch(setError)
+        } catch (error) {
+            setError(error)
+        }
+
     }
     return (
         <main>
             <ErrorAlert error={ error } />
             <h1>New Table</h1>
             <form onSubmit={ handleSubmit }>
-                <div class="form-group">
+                <div className="form-group">
                 <label htmlFor="table_name">
                     <input type="text" name="table_name" id="table_name" placeholder="Table name" value={ tableName } onChange={ handleChange } minLength={ 2 } required>
                     </input>
                 </label>
                 </div>
-                <div class="form-group">
+                <div className="form-group">
                 <label htmlFor="capacity">
                 <input type="number" name="capacity" id="capacity" placeholder="Number of people" pattern="[0-9]*" value={ capacity } onChange={ handleChange } min={ 2 }  required></input>
                 </label>
                 </div>
-                <div class="form-group">
+                <div className="form-group">
                     <Button type="button" className="btn btn-secondary"onClick={() => history.goBack()}>Cancel</Button> 
                     <Button type="submit" className="btn btn-primary" >Submit</Button>  
                 </div>

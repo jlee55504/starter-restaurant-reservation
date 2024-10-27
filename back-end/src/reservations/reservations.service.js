@@ -36,7 +36,7 @@ const search = mobile_number => {
     }
 
 const update = updatedReservation => {
-    if (updatedReservation.status === "finished"){
+    if (updatedReservation.status === "finished" || updatedReservation.status === "cancelled"){
         return knex.transaction((trx) => {
             trx("seats")
                     .select("reservation_id")
