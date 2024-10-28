@@ -105,7 +105,7 @@ function ReservationSeats() {
      */
     return (
         <main>
-            <h1>Seat Reservation</h1>
+            <h1>Assign reservation to table</h1>
             {/* Displays any error messages */}
             <ErrorAlert error={error} />
            {tables.length > 0 ? <form onSubmit={handleSubmit}>
