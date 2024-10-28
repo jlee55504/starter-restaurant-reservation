@@ -87,7 +87,6 @@ function SearchForReservation() {
                 </div>
             </form>
             {displayReservations && reservations.length > 0 ? <ReservationsList reservationsList={reservations} /> : null}
-            {cantFindReservation !== ""  ? <h6>{cantFindReservation}</h6> : null}
         </div>
     </main>
     );
