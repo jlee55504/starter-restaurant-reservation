@@ -27,12 +27,12 @@ const hasRequiredProperties = hasProperties(
     if (reservation) {
 
       // This code may need to be deleted to pass the tests
-     /* if (mobile_number && reservation.length === 0) {
+      if (mobile_number && reservation.length === 0) {
           return next({
             status: 404,
             message: "No reservations found",
           });
-      }*/
+      }
       res.locals.reservation = reservation;
       return next();
     };

@@ -1,5 +1,5 @@
 const { PORT = 5000 } = process.env;
-process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
+//process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
 const app = require("./app");
 const knex = require("./db/connection");
 

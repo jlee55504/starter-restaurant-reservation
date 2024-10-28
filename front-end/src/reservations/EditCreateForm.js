@@ -162,15 +162,15 @@ function EditCreateForm() {
                 people: Number(people),
             };      
         checkReservationForTimeAndDate(newReservation);
-         await makeNewReservation(newReservation, abortController.signal)    
-        history.push(
-            `/dashboard?date=${formatAsDate(newReservation.reservation_date)}`);
         setFirstName("");
         setLastName("");
         setMobileNumber("");
         setReservationDate("");
         setReservationTime("");
         setPeople(1);
+         await makeNewReservation(newReservation, abortController.signal);   
+        history.push(
+            `/dashboard?date=${formatAsDate(newReservation.reservation_date)}`);
         return ()=> abortController.abort();
         } catch (error) {
             //setFirstName("");

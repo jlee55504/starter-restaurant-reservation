@@ -95,7 +95,8 @@ useEffect(() => {
         };
         if (reservationList.length === 1) {
           const singleReservation = await readReservations(date, abortController.signal);
-          const filteredReservation = singleReservation.filter(reservation => reservation.status !== "cancelled" && reservation.status !== "finished")
+          const filteredReservation = singleReservation.filter(reservation => reservation.status !== "cancelled" && reservation.status !== "finished");
+          setReservations(filteredReservation);
             if (filteredReservation.length === 0)  {
               setReservations([]);
               const currentTables = await listTables(abortController.signal);
@@ -104,16 +105,18 @@ useEffect(() => {
                   return ()=> abortController.abort();
                 }
                 setTables(currentTables);
-              return ()=> abortController.abort();
+                return ()=> abortController.abort();
             }
-          const currentTables = await listTables(abortController.signal);
+            else {
+              const currentTables = await listTables(abortController.signal);
                 if (currentTables.length === 0) {
                   setTables([]);
                   return ()=> abortController.abort();
                 }
                 setTables(currentTables);
-          return ()=> abortController.abort();
-        };
+              return ()=> abortController.abort();
+            }
+          }
         const filteredReservations = reservationList.filter(reservation => reservation.reservation_date === date && reservation.status !== "finished" && reservation.status !== "cancelled")
             .map(reservation => { 
               if (reservation.reservation_date === date) { 
@@ -133,6 +136,16 @@ useEffect(() => {
             } else {
                 const currentReservations = await readReservations(filteredReservations, abortController.signal);
                 const refilteredReservationsList = currentReservations.filter(reservation => reservation.status !== "cancelled" && reservation.status !== "finished");
+                if (refilteredReservationsList.length === 0) {
+                  setReservations([]);
+                  const currentTables = await listTables(abortController.signal);
+                if (currentTables.length === 0) {
+                  setTables([]);
+                  return ()=> abortController.abort();
+                }
+                setTables(currentTables);
+                return ()=> abortController.abort();
+                }
                 setReservations(refilteredReservationsList);
                 const currentTables = await listTables(abortController.signal);
                 if (currentTables.length === 0) {
@@ -148,7 +161,7 @@ useEffect(() => {
     }
       else {
         try {
-          const reservationList = await listReservations({ date }, abortController.signal);
+          const reservationList = await listReservations({ queryParams }, abortController.signal);
           if (reservationList.length === 0) {
             setReservations([]);
             const currentTables = await listTables(abortController.signal);
@@ -201,6 +214,16 @@ useEffect(() => {
             } else {
                 const currentReservations = await readReservations(filteredReservations, abortController.signal);
                 const refilteredReservationsList =  currentReservations.filter(reservation => reservation.status !== "cancelled" && reservation.status !== "finished");
+                if (refilteredReservationsList.length === 0) {
+                  setReservations([]);
+                  const currentTables = await listTables(abortController.signal);
+                if (currentTables.length === 0) {
+                  setTables([]);
+                  return ()=> abortController.abort();
+                }
+                setTables(currentTables);
+                return ()=> abortController.abort();
+                }
                 setReservations(refilteredReservationsList);
                 const currentTables = await listTables(abortController.signal);
                 if (currentTables.length === 0) {

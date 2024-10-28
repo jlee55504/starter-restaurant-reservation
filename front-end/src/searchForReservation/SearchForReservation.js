@@ -12,7 +12,8 @@ function SearchForReservation() {
     const [reservationsError, setReservationsError] = useState(null);
     const [displayReservations, setDisplayReservations] = useState(false);
     // Displays message if the no reservation's contain the inputted mobile number 
-    const [cantFindReservation, setCantFindReservation] = useState("")
+    const [cantFindReservation, setCantFindReservation] = useState("");
+    const [displayCantFindReservationError, setDisplayCantFindReservationError] = useState(false);
     const history = useHistory();
 
     useEffect(() => {
@@ -28,22 +29,33 @@ function SearchForReservation() {
         }
     }
 
+    useEffect(() => {
+        if (!displayCantFindReservationError) return;
+        else setReservationsError({
+            id: 1,
+            message:"No reservations found"});
+    }, [displayCantFindReservationError]);
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         const abortController = new AbortController();
         setCantFindReservation("");
+        setDisplayCantFindReservationError(false);
         setReservationsError(null);
         setDisplayReservations(false);
         try {
             const selectedReservations = await searchForReservation(mobileNumber, abortController.signal);
             const reservationsWithDateAndTime = setReservationDateAndTime(selectedReservations);
+            
+            if (selectedReservations.length === 0){ 
+                setReservations([]);
+                setDisplayCantFindReservationError(true);
+            }
             setReservations(reservationsWithDateAndTime);
-            if (selectedReservations.length === 0) setCantFindReservation("No reservations found");
             setMobileNumber("");
             return () => abortController.abort();
         } catch (error) {
-            setReservationsError(error)
+            setReservationsError(error);
         }   
     }
 
