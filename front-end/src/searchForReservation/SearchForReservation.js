@@ -61,7 +61,7 @@ function SearchForReservation() {
 
     return (
     <main>
-        <h1>Search for a reservation by phone number</h1>
+        <h1>Search for reservations by phone number</h1>
         <ErrorAlert error={reservationsError} />
         <div>
             <form onSubmit={handleSubmit}>
