@@ -12,7 +12,7 @@ function SearchForReservation() {
     const [reservationsError, setReservationsError] = useState(null);
     const [displayReservations, setDisplayReservations] = useState(false);
     // Displays message if the no reservation's contain the inputted mobile number 
-    const [cantFindReservation, setCantFindReservation] = useState("");
+    //const [cantFindReservation, setCantFindReservation] = useState("");
     const [displayCantFindReservationError, setDisplayCantFindReservationError] = useState(false);
     const history = useHistory();
 
@@ -39,7 +39,7 @@ function SearchForReservation() {
     const handleSubmit = async (event) => {
         event.preventDefault();
         const abortController = new AbortController();
-        setCantFindReservation("");
+        //setCantFindReservation("");
         setDisplayCantFindReservationError(false);
         setReservationsError(null);
         setDisplayReservations(false);
