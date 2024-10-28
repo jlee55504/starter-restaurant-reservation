@@ -96,7 +96,6 @@ useEffect(() => {
         if (reservationList.length === 1) {
           const singleReservation = await readReservations(date, abortController.signal);
           const filteredReservation = singleReservation.filter(reservation => reservation.status !== "cancelled" && reservation.status !== "finished");
-          setReservations(filteredReservation);
             if (filteredReservation.length === 0)  {
               setReservations([]);
               const currentTables = await listTables(abortController.signal);
@@ -108,6 +107,7 @@ useEffect(() => {
                 return ()=> abortController.abort();
             }
             else {
+              setReservations(filteredReservation);
               const currentTables = await listTables(abortController.signal);
                 if (currentTables.length === 0) {
                   setTables([]);
@@ -146,14 +146,16 @@ useEffect(() => {
                 setTables(currentTables);
                 return ()=> abortController.abort();
                 }
-                setReservations(refilteredReservationsList);
-                const currentTables = await listTables(abortController.signal);
-                if (currentTables.length === 0) {
-                  setTables([]);
+                else {
+                  setReservations(refilteredReservationsList);
+                  const currentTables = await listTables(abortController.signal);
+                  if (currentTables.length === 0) {
+                    setTables([]);
+                    return ()=> abortController.abort();
+                  }
+                  setTables(currentTables);
                   return ()=> abortController.abort();
-                }
-                setTables(currentTables);
-                return ()=> abortController.abort();
+              }
             }
       } catch (error) {
         setReservationsError(error)
@@ -185,14 +187,15 @@ useEffect(() => {
                 setTables(currentTables);
               return ()=> abortController.abort();
             }
-            setReservations(singleReservation);
-            const currentTables = await listTables(abortController.signal);
+            else {
+              setReservations(singleReservation);
+              const currentTables = await listTables(abortController.signal);
                 if (currentTables.length === 0) {
                   setTables([]);
                   return ()=> abortController.abort();
                 }
                 setTables(currentTables);
-            return ()=> abortController.abort();
+              return ()=> abortController.abort();}
           }
         else {
           const filteredReservations = reservationList.filter(reservation => reservation.reservation_date === queryParams && reservation.status !== "finished")
@@ -224,7 +227,8 @@ useEffect(() => {
                 setTables(currentTables);
                 return ()=> abortController.abort();
                 }
-                setReservations(refilteredReservationsList);
+                else {
+                  setReservations(refilteredReservationsList);
                 const currentTables = await listTables(abortController.signal);
                 if (currentTables.length === 0) {
                   setTables([]);
@@ -232,7 +236,9 @@ useEffect(() => {
                 }
                 setTables(currentTables);
                 return ()=> abortController.abort();
-            }}
+              }
+            }
+          }
         } catch (error) {
           setReservationsError(error);
         }

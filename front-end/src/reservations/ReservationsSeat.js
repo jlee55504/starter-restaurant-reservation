@@ -72,13 +72,14 @@ function ReservationSeats() {
         setError(null); // Resets any existing errors
         const abortController = new AbortController();
         /* Validation: Ensure a table is selected */
+        /* Finds the selected table object from the tables array */
+        const table = tables.find((t) => t.table_id === Number(selectedTable)); 
         if (!selectedTable) {
             setError({ message: "Please select a table." });
             return;
         }
-
-        /* Finds the selected table object from the tables array */
-        const table = tables.find((t) => t.table_id === Number(selectedTable));     
+        
+            
 
         /* Prepares the data payload for the API request */
         const data = { reservation_id: reservation.reservation_id };
@@ -86,11 +87,12 @@ function ReservationSeats() {
         try {
             /* Calls the assignTable API function to assign the reservation to the selected table */
             const newReservationStatus = { status: "seated" };
-            await updateReservation(reservation.reservation_id, newReservationStatus, abortController.signal);
             await assignTable(selectedTable, data, abortController.signal);
+            await updateReservation(reservation.reservation_id, newReservationStatus, abortController.signal);
+            
             /* Navigates to the /dashboard page upon successful assignment */
              history.push("/dashboard");
-             return () => abortController.abort()
+             return () => abortController.abort();
         } catch (apiError) {
             /* Catches and sets any errors returned from the API */
             setError(apiError);

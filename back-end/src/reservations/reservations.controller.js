@@ -25,18 +25,17 @@ const hasRequiredProperties = hasProperties(
     else if (!date && mobile_number && !req.params.reservation_id) reservation = await reservationsService.search(mobile_number);
     else if (!date && !mobile_number && !req.params.reservation_id) reservation = await reservationsService.list();
     if (reservation) {
-
       // This code may need to be deleted to pass the tests
       if (mobile_number && reservation.length === 0) {
           return next({
             status: 404,
             message: "No reservations found",
           });
-      }
+      };
       res.locals.reservation = reservation;
       return next();
     };
-      next({
+    next({
       status: 404,
       message: "Reservation cannot be found.",
     });
@@ -66,7 +65,7 @@ const updatedReservationHasValidProperties = async (req, res, next) => {
     status: 404,
     message: "Reservation cannot be found.",
   });
-}
+};
 
 const checkReservationForClosedDay = (req, res, next) => {
   const { data: { reservation_date } = {} } = req.body;
@@ -76,7 +75,7 @@ const checkReservationForClosedDay = (req, res, next) => {
       status: 400,
       message: "This restaurant is closed on Tuesdays. Please try again. "
     });
-  }
+  };
   next();
 };
 
@@ -94,9 +93,9 @@ const checkReservationForPastDates = (req, res, next) => {
       status: 400,
       message: `Only future reservations are allowed.`,
     });
-  }
+  };
   next();
-}
+};
 
 const checkReservationTimeforBeforeOpeningHours = (req, res, next) => {
   const { data: { reservation_time, reservation_date } = {} } = req.body;
@@ -110,7 +109,7 @@ const checkReservationTimeforBeforeOpeningHours = (req, res, next) => {
           });
         };
       next();
-}
+};
 
 const checkReservationTimeforAfterClosingHours = (req, res, next) => {
   const { data: { reservation_time, reservation_date } = {} } = req.body;
@@ -124,7 +123,7 @@ const checkReservationTimeforAfterClosingHours = (req, res, next) => {
           });
         };
       next();
-}
+};
 
 
 // Route handlers
@@ -151,17 +150,17 @@ const update = async (req, res) => {
   };
   const data = await reservationsService.update(updatedReservation);
   res.json({ data });
-}
+};
 
 const updateEditedreservation = async (req, res) => {
   const {data = {}} = req.body;
   const updatedReservation = {
     ...data,
     reservation_id: data.reservation_id,
-  }
+  };
   const updatedData = await reservationsService.update(updatedReservation);
   res.json({ updatedData });
-}
+};
 
 module.exports = {
   readReservations: [asyncErrorBoundary(reservationsExist), read],
